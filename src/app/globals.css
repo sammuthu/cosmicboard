@@ -1,0 +1,417 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom animations for themes */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+  25% { transform: translate(100px, -50px) scale(1.1); opacity: 1; }
+  50% { transform: translate(-50px, -100px) scale(0.9); opacity: 0.6; }
+  75% { transform: translate(-100px, 50px) scale(1.05); opacity: 0.9; }
+}
+
+@keyframes float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+  33% { transform: translate(-80px, 60px) scale(1.2); opacity: 1; }
+  66% { transform: translate(120px, -40px) scale(0.8); opacity: 0.5; }
+}
+
+@keyframes float-3 {
+  0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+  50% { transform: translate(60px, -80px); opacity: 0.9; }
+}
+
+@keyframes float-4 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
+  50% { transform: translate(-100px, 100px) rotate(180deg); opacity: 0.8; }
+}
+
+@keyframes float-5 {
+  0%, 100% { transform: translate(0, 0); opacity: 0.9; }
+  25% { transform: translate(50px, 50px); opacity: 0.7; }
+  75% { transform: translate(-50px, -50px); opacity: 1; }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes moon-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes drift-1 {
+  0%, 100% { transform: translateX(-20px); }
+  50% { transform: translateX(100vw); }
+}
+
+@keyframes drift-2 {
+  0%, 100% { transform: translateX(calc(100vw + 20px)); }
+  50% { transform: translateX(-200px); }
+}
+
+@keyframes drift-3 {
+  0%, 100% { transform: translateX(25vw); }
+  50% { transform: translateX(75vw); }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.3; }
+}
+
+@keyframes shooting-star {
+  0% { transform: translateX(0) translateY(0); opacity: 1; }
+  100% { transform: translateX(-1000px) translateY(300px); opacity: 0; }
+}
+
+@keyframes cosmic-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(50px, -30px) scale(1.1); }
+  66% { transform: translate(-30px, 20px) scale(0.95); }
+}
+
+@keyframes cosmic-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-40px, 40px) scale(1.15); }
+}
+
+@keyframes cosmic-float-3 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(30px, -20px); }
+  75% { transform: translate(-20px, 30px); }
+}
+
+@keyframes shimmer-overlay {
+  0% { transform: translateX(-100%) translateY(-100%); }
+  100% { transform: translateX(100%) translateY(100%); }
+}
+
+@keyframes nebula-swirl-1 {
+  0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.3; }
+  50% { transform: rotate(180deg) scale(1.2); opacity: 0.5; }
+}
+
+@keyframes nebula-swirl-2 {
+  0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.3; }
+  50% { transform: rotate(-180deg) scale(1.3); opacity: 0.5; }
+}
+
+@keyframes nebula-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.4; }
+}
+
+@keyframes galaxy-spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Animation classes */
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-float-1 {
+  animation: float-1 15s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-2 18s ease-in-out infinite;
+}
+
+.animate-float-3 {
+  animation: float-3 12s ease-in-out infinite;
+}
+
+.animate-float-4 {
+  animation: float-4 20s ease-in-out infinite;
+}
+
+.animate-float-5 {
+  animation: float-5 14s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animate-moon-glow {
+  animation: moon-glow 3s ease-in-out infinite;
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-drift-1 {
+  animation: drift-1 30s linear infinite;
+}
+
+.animate-drift-2 {
+  animation: drift-2 35s linear infinite;
+}
+
+.animate-drift-3 {
+  animation: drift-3 25s linear infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-shooting-star {
+  animation: shooting-star 3s linear infinite;
+}
+
+.animate-cosmic-float-1 {
+  animation: cosmic-float-1 20s ease-in-out infinite;
+}
+
+.animate-cosmic-float-2 {
+  animation: cosmic-float-2 15s ease-in-out infinite;
+}
+
+.animate-cosmic-float-3 {
+  animation: cosmic-float-3 18s ease-in-out infinite;
+}
+
+.animate-shimmer-overlay {
+  animation: shimmer-overlay 15s linear infinite;
+}
+
+.animate-nebula-swirl-1 {
+  animation: nebula-swirl-1 30s ease-in-out infinite;
+}
+
+.animate-nebula-swirl-2 {
+  animation: nebula-swirl-2 35s ease-in-out infinite;
+}
+
+.animate-nebula-pulse {
+  animation: nebula-pulse 8s ease-in-out infinite;
+}
+
+.animate-galaxy-spin {
+  animation: galaxy-spin 60s linear infinite;
+}
+
+/* Theme Classes */
+.theme-sun {
+  background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 25%, #f59e0b 50%, #fef3c7 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 10s ease infinite;
+  min-height: 100vh;
+}
+
+.theme-moon {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 25%, #475569 50%, #1e293b 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+  min-height: 100vh;
+}
+
+.theme-universe {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 25%, #2d1b69 50%, #0f0f23 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 20s ease infinite;
+  min-height: 100vh;
+}
+
+.theme-cosmic {
+  background: linear-gradient(135deg, #18181b 0%, #3730a3 25%, #6366f1 50%, #18181b 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 12s ease infinite;
+  min-height: 100vh;
+}
+
+.theme-galaxy {
+  background: linear-gradient(135deg, #1f2937 0%, #4c1d95 25%, #7c3aed 50%, #1f2937 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 18s ease infinite;
+  min-height: 100vh;
+}
+
+/* Apply theme colors to components */
+
+/* Sun Theme */
+.theme-sun .bg-white\/90,
+.theme-sun .bg-white\/95,
+.theme-sun .bg-white {
+  background: rgba(254, 243, 199, 0.8) !important;
+}
+
+.theme-sun .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, rgba(254, 243, 199, 0.9), rgba(251, 191, 36, 0.6)) !important;
+}
+
+/* Moon Theme */
+.theme-moon .bg-white\/90,
+.theme-moon .bg-white\/95,
+.theme-moon .bg-white {
+  background: rgba(71, 85, 105, 0.8) !important;
+}
+
+.theme-moon .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, rgba(71, 85, 105, 0.9), rgba(30, 41, 59, 0.8)) !important;
+}
+
+.theme-moon .text-gray-700,
+.theme-moon .text-gray-800,
+.theme-moon .text-gray-600 {
+  color: #f1f5f9 !important;
+}
+
+/* Universe Theme */
+.theme-universe .bg-white\/90,
+.theme-universe .bg-white\/95,
+.theme-universe .bg-white {
+  background: rgba(26, 26, 62, 0.8) !important;
+}
+
+.theme-universe .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, rgba(26, 26, 62, 0.9), rgba(45, 27, 105, 0.8)) !important;
+}
+
+.theme-universe .text-gray-700,
+.theme-universe .text-gray-800,
+.theme-universe .text-gray-600 {
+  color: #e2e8f0 !important;
+}
+
+/* Cosmic Theme */
+.theme-cosmic .bg-white\/90,
+.theme-cosmic .bg-white\/95,
+.theme-cosmic .bg-white {
+  background: rgba(55, 48, 163, 0.8) !important;
+}
+
+.theme-cosmic .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, rgba(55, 48, 163, 0.9), rgba(99, 102, 241, 0.8)) !important;
+}
+
+.theme-cosmic .text-gray-700,
+.theme-cosmic .text-gray-800,
+.theme-cosmic .text-gray-600 {
+  color: #f1f5f9 !important;
+}
+
+/* Galaxy Theme */
+.theme-galaxy .bg-white\/90,
+.theme-galaxy .bg-white\/95,
+.theme-galaxy .bg-white {
+  background: rgba(76, 29, 149, 0.8) !important;
+}
+
+.theme-galaxy .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, rgba(76, 29, 149, 0.9), rgba(124, 58, 237, 0.8)) !important;
+}
+
+.theme-galaxy .text-gray-700,
+.theme-galaxy .text-gray-800,
+.theme-galaxy .text-gray-600 {
+  color: #f8fafc !important;
+}
+
+/* Override specific gradient backgrounds for all themes */
+.theme-moon .from-blue-50,
+.theme-moon .from-red-50,
+.theme-universe .from-blue-50,
+.theme-universe .from-red-50,
+.theme-cosmic .from-blue-50,
+.theme-cosmic .from-red-50,
+.theme-galaxy .from-blue-50,
+.theme-galaxy .from-red-50 {
+  background: transparent !important;
+}
+
+/* Keep dropdown containers white for readability */
+[data-dropdown="true"] {
+  background: white !important;
+}
+
+.theme-switcher-dropdown {
+  background: white !important;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Fade in animation for tooltip */
+@keyframes fade-in {
+  0% { 
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Animated gradient background */
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 4s ease infinite;
+}

@@ -4,12 +4,13 @@ import Task from '@/models/Task';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
+    const { id } = await params;
     
-    const task = await Task.findById(params.id).populate('projectId', 'name');
+    const task = await Task.findById(id).populate('projectId', 'name');
     
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -24,10 +25,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
+    const { id } = await params;
     
     const body = await request.json();
     
@@ -37,7 +39,7 @@ export async function PATCH(
     }
     
     const task = await Task.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: body },
       { new: true, runValidators: true }
     ).populate('projectId', 'name');
@@ -55,12 +57,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
+    const { id } = await params;
     
-    const task = await Task.findByIdAndDelete(params.id);
+    const task = await Task.findByIdAndDelete(id);
     
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });

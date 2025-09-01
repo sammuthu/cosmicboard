@@ -5,12 +5,13 @@ import Task from '@/models/Task';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
+    const { id } = await params;
     
-    const project = await Project.findById(params.id);
+    const project = await Project.findById(id);
     
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
@@ -25,14 +26,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
+    const { id } = await params;
     
     const body = await request.json();
     const project = await Project.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: body },
       { new: true, runValidators: true }
     );
@@ -50,16 +52,17 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
+    const { id } = await params;
     
     const url = new URL(request.url);
     const cascade = url.searchParams.get('cascade') === 'true';
     
     // Check if project has tasks
-    const taskCount = await Task.countDocuments({ projectId: params.id });
+    const taskCount = await Task.countDocuments({ projectId: id });
     
     if (taskCount > 0 && !cascade) {
       return NextResponse.json(
@@ -69,10 +72,10 @@ export async function DELETE(
     }
     
     if (cascade) {
-      await Task.deleteMany({ projectId: params.id });
+      await Task.deleteMany({ projectId: id });
     }
     
-    const project = await Project.findByIdAndDelete(params.id);
+    const project = await Project.findByIdAndDelete(id);
     
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });

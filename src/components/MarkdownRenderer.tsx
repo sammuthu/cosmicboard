@@ -22,10 +22,10 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
   };
 
   return (
-    <ReactMarkdown
-      className={`prose prose-invert max-w-none ${className}`}
-      remarkPlugins={[remarkGfm]}
-      components={{
+    <div className={`prose prose-invert max-w-none ${className}`}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
         h1: ({ children }) => (
           <h1 className="text-3xl font-bold text-white mb-4 mt-6">{children}</h1>
         ),
@@ -146,5 +146,6 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
     >
       {content}
     </ReactMarkdown>
+    </div>
   );
 }

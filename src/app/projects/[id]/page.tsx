@@ -308,76 +308,65 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* Main Tabs */}
-        <div className="flex justify-center gap-4 mb-8">
-          <button
-            onClick={() => {
-              setActiveTab('tasks')
-              setCurrentPage(1)
-            }}
-            className={`group relative px-8 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'tasks' ? 'text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <div className={`absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-lg transition-opacity duration-500 ${
-              activeTab === 'tasks' ? 'opacity-75' : 'opacity-0 group-hover:opacity-50'
-            } blur-sm`} />
-            <div className={`relative px-8 py-3 rounded-lg ${
-              activeTab === 'tasks' ? 'bg-black' : 'bg-gray-800/50'
-            }`}>
-              Tasks
+        {/* Main Tabs Container */}
+        <div className="relative mb-8">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-yellow-500/30 rounded-xl blur-sm" />
+          <div className="relative bg-gray-900/90 backdrop-blur-sm rounded-xl p-2">
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => {
+                  setActiveTab('tasks')
+                  setCurrentPage(1)
+                }}
+                className={`relative px-8 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'tasks' ? 'text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                Tasks
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('references')
+                  setCurrentPage(1)
+                }}
+                className={`relative px-8 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'references' ? 'text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                References
+              </button>
             </div>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('references')
-              setCurrentPage(1)
-            }}
-            className={`group relative px-8 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'references' ? 'text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <div className={`absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-lg transition-opacity duration-500 ${
-              activeTab === 'references' ? 'opacity-75' : 'opacity-0 group-hover:opacity-50'
-            } blur-sm`} />
-            <div className={`relative px-8 py-3 rounded-lg ${
-              activeTab === 'references' ? 'bg-black' : 'bg-gray-800/50'
-            }`}>
-              References
-            </div>
-          </button>
+          </div>
         </div>
 
         {/* Tasks Tab Content */}
         {activeTab === 'tasks' && (
           <div>
-            {/* Task Status Tabs */}
-            <div className="flex justify-center gap-2 mb-6">
-              {(['active', 'completed', 'deleted'] as TaskStatus[]).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => {
-                    setTaskTab(status)
-                    setCurrentPage(1)
-                  }}
-                  className={`group relative px-6 py-2 rounded-lg transition-all capitalize ${
-                    taskTab === status ? 'text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <div className={`absolute -inset-0.5 bg-gradient-to-r ${
-                    status === 'active' ? 'from-purple-500 to-pink-500' :
-                    status === 'completed' ? 'from-green-500 to-emerald-500' :
-                    'from-red-500 to-rose-500'
-                  } rounded-lg transition-opacity duration-500 ${
-                    taskTab === status ? 'opacity-50' : 'opacity-0 group-hover:opacity-30'
-                  } blur-sm`} />
-                  <div className={`relative px-6 py-2 rounded-lg ${
-                    taskTab === status ? 'bg-gray-900' : 'bg-gray-800/30'
-                  }`}>
-                    {status}
-                  </div>
-                </button>
-              ))}
+            {/* Task Status Tabs Container */}
+            <div className="relative mb-6">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-700/30 to-gray-600/30 rounded-xl blur-sm" />
+              <div className="relative bg-gray-800/50 backdrop-blur-sm rounded-xl p-2">
+                <div className="flex justify-center gap-2">
+                  {(['active', 'completed', 'deleted'] as TaskStatus[]).map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        setTaskTab(status)
+                        setCurrentPage(1)
+                      }}
+                      className={`relative px-6 py-2 rounded-lg transition-all capitalize ${
+                        taskTab === status 
+                          ? status === 'active' ? 'text-purple-300 bg-purple-500/20' :
+                            status === 'completed' ? 'text-green-300 bg-green-500/20' :
+                            'text-red-300 bg-red-500/20'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Add Task Button */}

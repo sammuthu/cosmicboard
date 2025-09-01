@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import useSWR, { mutate } from 'swr'
-import dynamic from 'next/dynamic'
 import PrismCard from '@/components/PrismCard'
 import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import Prism from 'prismjs'
@@ -19,8 +18,7 @@ import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-sql'
 import 'prismjs/components/prism-markdown'
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
-import 'react-quill/dist/quill.snow.css'
+// Removed ReactQuill due to React 18+ compatibility issues
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -88,7 +86,7 @@ export default function ProjectDetailPage() {
         body: JSON.stringify({
           projectId,
           title: newTaskTitle,
-          contentHtml: newTaskContent,
+          contentHtml: newTaskContent ? `<p>${newTaskContent.replace(/\n/g, '<br>')}</p>` : '',
           priority: newTaskPriority,
           dueDate: newTaskDueDate || undefined,
         }),
@@ -399,15 +397,12 @@ export default function ProjectDetailPage() {
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white mb-4"
                 />
-                <div className="mb-4">
-                  <ReactQuill
-                    theme="snow"
-                    value={newTaskContent}
-                    onChange={setNewTaskContent}
-                    className="bg-gray-800 text-white rounded-lg"
-                    placeholder="Task description..."
-                  />
-                </div>
+                <textarea
+                  placeholder="Task description..."
+                  value={newTaskContent}
+                  onChange={(e) => setNewTaskContent(e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white mb-4 h-32 resize-none"
+                />
                 <div className="flex gap-4 mb-4">
                   <select
                     value={newTaskPriority}

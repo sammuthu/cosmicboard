@@ -274,11 +274,14 @@ export default function ProjectDetailPage() {
         <div className="mb-8">
           <button
             onClick={() => router.push('/')}
-            className="group inline-flex items-center gap-2 mb-4 text-gray-400 hover:text-white transition-colors"
+            className="group inline-flex items-center gap-2 mb-4 relative"
           >
-            <span className="text-xl">←</span>
-            <span className="border-b border-transparent group-hover:border-purple-400 transition-colors">
-              Back to Projects
+            <span className="text-xl bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">←</span>
+            <span className="relative">
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent font-medium">
+                Back to Projects
+              </span>
+              <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 group-hover:w-full transition-all duration-300" />
             </span>
           </button>
           

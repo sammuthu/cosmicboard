@@ -9,17 +9,42 @@ interface ProjectCardProps {
     name: string
     description?: string
     counts: {
-      active: number
-      completed: number
-      deleted: number
+      tasks?: {
+        active: number
+        completed: number
+        deleted: number
+      }
+      references?: {
+        total: number
+        snippets: number
+        documentation: number
+      }
+      // Legacy support for old structure
+      active?: number
+      completed?: number
+      deleted?: number
     }
   }
 }
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   const router = useRouter()
-  const total = project.counts.active + project.counts.completed
-  const progress = total > 0 ? (project.counts.completed / total) * 100 : 0
+  
+  // Support both old and new data structures
+  const taskCounts = project.counts.tasks || {
+    active: project.counts.active || 0,
+    completed: project.counts.completed || 0,
+    deleted: project.counts.deleted || 0
+  }
+  
+  const referenceCounts = project.counts.references || {
+    total: 0,
+    snippets: 0,
+    documentation: 0
+  }
+  
+  const total = taskCounts.active + taskCounts.completed
+  const progress = total > 0 ? (taskCounts.completed / total) * 100 : 0
 
   return (
     <PrismCard 
@@ -44,18 +69,43 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           />
         </div>
         
-        <div className="grid grid-cols-3 gap-2 pt-2">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{project.counts.active}</div>
-            <div className="text-xs text-gray-500">Active</div>
+        <div className="grid grid-cols-2 gap-4 pt-3">
+          {/* Tasks Column */}
+          <div className="border-r border-gray-700 pr-4">
+            <div className="text-sm font-semibold text-gray-400 mb-2">TASKS</div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Active</span>
+                <span className="text-lg font-bold text-blue-400">{taskCounts.active}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Done</span>
+                <span className="text-lg font-bold text-green-400">{taskCounts.completed}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Deleted</span>
+                <span className="text-lg font-bold text-red-400">{taskCounts.deleted}</span>
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-400">{project.counts.completed}</div>
-            <div className="text-xs text-gray-500">Done</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-red-400">{project.counts.deleted}</div>
-            <div className="text-xs text-gray-500">Deleted</div>
+          
+          {/* References Column */}
+          <div className="pl-4">
+            <div className="text-sm font-semibold text-gray-400 mb-2">REFERENCES</div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Total</span>
+                <span className="text-lg font-bold text-purple-400">{referenceCounts.total}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Snippets</span>
+                <span className="text-lg font-bold text-cyan-400">{referenceCounts.snippets}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Docs</span>
+                <span className="text-lg font-bold text-amber-400">{referenceCounts.documentation}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

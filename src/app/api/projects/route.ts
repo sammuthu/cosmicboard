@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectMongo from '@/lib/db';
 import Project from '@/models/Project';
 import Task from '@/models/Task';
+import Reference from '@/models/Reference';
 
 export async function GET() {
   try {
@@ -9,17 +10,28 @@ export async function GET() {
     
     const projects = await Project.find().sort({ createdAt: -1 });
     
-    // Get task counts for each project
+    // Get task and reference counts for each project
     const projectsWithCounts = await Promise.all(
       projects.map(async (project) => {
-        const tasks = await Task.find({ projectId: project._id });
+        const [tasks, references] = await Promise.all([
+          Task.find({ projectId: project._id }),
+          Reference.find({ projectId: project._id })
+        ]);
+        
         const active = tasks.filter(t => t.status === 'ACTIVE').length;
         const completed = tasks.filter(t => t.status === 'COMPLETED').length;
         const deleted = tasks.filter(t => t.status === 'DELETED').length;
         
+        const totalReferences = references.length;
+        const snippets = references.filter(r => r.category === 'snippet').length;
+        const documentation = references.filter(r => r.category === 'documentation').length;
+        
         return {
           ...project.toObject(),
-          counts: { active, completed, deleted }
+          counts: { 
+            tasks: { active, completed, deleted },
+            references: { total: totalReferences, snippets, documentation }
+          }
         };
       })
     );

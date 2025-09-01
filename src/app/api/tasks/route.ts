@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     await connectMongo();
     
     const body = await request.json();
-    const { projectId, title, contentHtml, dueDate, priority } = body;
+    const { projectId, title, contentHtml, dueDate, priority, tags } = body;
     
     if (!projectId || !title) {
       return NextResponse.json(
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       contentHtml,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       priority: priority || 'MEDIUM',
+      tags: tags || [],
     });
     
     return NextResponse.json(task, { status: 201 });

@@ -10,6 +10,7 @@ export interface ITask extends Document {
   dueDate?: Date;
   priority: Priority;
   status: Status;
+  tags?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +43,10 @@ const TaskSchema = new Schema<ITask>(
       enum: ['ACTIVE', 'COMPLETED', 'DELETED'],
       default: 'ACTIVE',
     },
+    tags: [{
+      type: String,
+      trim: true,
+    }],
   },
   {
     timestamps: true,

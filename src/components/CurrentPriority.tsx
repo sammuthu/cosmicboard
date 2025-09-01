@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import PrismCard from './PrismCard'
 import { formatDate, isOverdue } from '@/lib/utils'
 import { CheckCircle, Clock, Calendar } from 'lucide-react'
@@ -18,6 +19,7 @@ interface Task {
 }
 
 export default function CurrentPriority() {
+  const router = useRouter()
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -94,21 +96,35 @@ export default function CurrentPriority() {
     LOW: 'bg-green-500/20 text-green-400 border-green-500/50'
   }
 
+  const cosmicPriorityNames = {
+    HIGH: 'Supernova',
+    MEDIUM: 'Stellar',
+    LOW: 'Nebula'
+  }
+
   return (
     <PrismCard className="mb-8">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-purple-400 mb-2">🎯 Current Priority</h2>
-          <span className="inline-flex items-center bg-blue-500/20 text-blue-400 text-sm px-3 py-1 rounded-full">
+          <button
+            onClick={() => router.push(`/projects/${task.projectId._id}`)}
+            className="inline-flex items-center bg-blue-500/20 text-blue-400 text-sm px-3 py-1 rounded-full hover:bg-blue-500/30 transition-colors"
+          >
             {task.projectId.name}
-          </span>
+          </button>
         </div>
         <span className={`px-3 py-1 rounded-full text-sm font-medium border ${priorityColors[task.priority]}`}>
-          {task.priority}
+          {cosmicPriorityNames[task.priority]}
         </span>
       </div>
       
-      <h3 className="text-2xl font-bold text-white mb-4">{task.title}</h3>
+      <h3 
+        className="text-2xl font-bold text-white mb-4 cursor-pointer hover:text-purple-300 transition-colors"
+        onClick={() => router.push(`/projects/${task.projectId._id}`)}
+      >
+        {task.title}
+      </h3>
       
       {task.contentHtml && (
         <div 

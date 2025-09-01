@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     await connectMongo()
     
     const data = await request.json()
-    const { projectId, title, content, category, tags } = data
+    const { projectId, title, content, category, priority, tags } = data
     
     if (!projectId || !title || !content) {
       return NextResponse.json(
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
       title,
       content,
       category: category || 'other',
+      priority: priority || 'MEDIUM',
       tags: tags || []
     })
     

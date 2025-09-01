@@ -5,6 +5,7 @@ export interface IReference extends Document {
   title: string;
   content: string;
   category?: string; // e.g., 'prompt', 'snippet', 'documentation', 'link'
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH';
   tags?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +31,11 @@ const ReferenceSchema = new Schema<IReference>(
       type: String,
       enum: ['prompt', 'snippet', 'documentation', 'link', 'other'],
       default: 'other',
+    },
+    priority: {
+      type: String,
+      enum: ['LOW', 'MEDIUM', 'HIGH'],
+      default: 'MEDIUM',
     },
     tags: [{
       type: String,

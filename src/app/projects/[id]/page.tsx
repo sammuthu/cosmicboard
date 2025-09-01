@@ -38,10 +38,12 @@ export default function ProjectDetailPage() {
   const [newTaskContent, setNewTaskContent] = useState('')
   const [newTaskPriority, setNewTaskPriority] = useState('MEDIUM')
   const [newTaskDueDate, setNewTaskDueDate] = useState('')
+  const [newTaskTags, setNewTaskTags] = useState('')
   
   const [newRefTitle, setNewRefTitle] = useState('')
   const [newRefContent, setNewRefContent] = useState('')
   const [newRefCategory, setNewRefCategory] = useState('snippet')
+  const [newRefPriority, setNewRefPriority] = useState('MEDIUM')
   const [newRefTags, setNewRefTags] = useState('')
   const [newRefLanguage, setNewRefLanguage] = useState('javascript')
   
@@ -89,6 +91,7 @@ export default function ProjectDetailPage() {
           contentHtml: newTaskContent ? `<p>${newTaskContent.replace(/\n/g, '<br>')}</p>` : '',
           priority: newTaskPriority,
           dueDate: newTaskDueDate || undefined,
+          tags: newTaskTags.split(',').map(tag => tag.trim()).filter(Boolean),
         }),
       })
       
@@ -98,6 +101,7 @@ export default function ProjectDetailPage() {
         setNewTaskContent('')
         setNewTaskPriority('MEDIUM')
         setNewTaskDueDate('')
+        setNewTaskTags('')
         setShowNewTask(false)
       }
     } catch (error) {
@@ -117,6 +121,7 @@ export default function ProjectDetailPage() {
           title: newRefTitle,
           content: newRefContent,
           category: newRefCategory,
+          priority: newRefPriority,
           tags: newRefTags.split(',').map(tag => tag.trim()).filter(Boolean),
         }),
       })
@@ -126,6 +131,7 @@ export default function ProjectDetailPage() {
         setNewRefTitle('')
         setNewRefContent('')
         setNewRefCategory('snippet')
+        setNewRefPriority('MEDIUM')
         setNewRefTags('')
         setNewRefLanguage('javascript')
         setShowNewReference(false)
@@ -207,7 +213,8 @@ export default function ProjectDetailPage() {
     
     const matchesSearch = !searchQuery || 
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.contentHtml && task.contentHtml.toLowerCase().includes(searchQuery.toLowerCase()))
+      (task.contentHtml && task.contentHtml.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      task.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     
     return matchesStatus && matchesSearch
   }) || []
@@ -233,6 +240,12 @@ export default function ProjectDetailPage() {
   const totalPages = Math.ceil(
     (activeTab === 'tasks' ? filteredTasks.length : filteredReferences.length) / itemsPerPage
   )
+
+  const cosmicPriorities = {
+    HIGH: { name: 'Supernova', emoji: '💥' },
+    MEDIUM: { name: 'Stellar', emoji: '⭐' },
+    LOW: { name: 'Nebula', emoji: '🌌' }
+  }
 
   const getPriorityColor = (priority: string) => {
     switch(priority) {
@@ -409,9 +422,9 @@ export default function ProjectDetailPage() {
                     onChange={(e) => setNewTaskPriority(e.target.value)}
                     className="p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
                   >
-                    <option value="LOW">Low Priority</option>
-                    <option value="MEDIUM">Medium Priority</option>
-                    <option value="HIGH">High Priority</option>
+                    <option value="LOW">🌌 Nebula (Low)</option>
+                    <option value="MEDIUM">⭐ Stellar (Medium)</option>
+                    <option value="HIGH">💥 Supernova (High)</option>
                   </select>
                   <input
                     type="date"
@@ -420,6 +433,13 @@ export default function ProjectDetailPage() {
                     className="p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
                   />
                 </div>
+                <input
+                  type="text"
+                  placeholder="Tags (comma separated, e.g., #urgent, #backend, #api)"
+                  value={newTaskTags}
+                  onChange={(e) => setNewTaskTags(e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white mb-4"
+                />
                 <div className="flex gap-2">
                   <button
                     onClick={handleCreateTask}
@@ -450,12 +470,24 @@ export default function ProjectDetailPage() {
                       )}
                       <h3 className="text-lg font-semibold text-white">{task.title}</h3>
                       <span className={`text-sm ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
+                        {cosmicPriorities[task.priority].emoji} {cosmicPriorities[task.priority].name}
                       </span>
                       {task.dueDate && (
                         <span className="text-sm text-gray-400">
                           Due: {new Date(task.dueDate).toLocaleDateString()}
                         </span>
+                      )}
+                      {task.tags && task.tags.length > 0 && (
+                        <div className="flex gap-1">
+                          {task.tags.slice(0, 2).map((tag: string, index: number) => (
+                            <span key={index} className="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">
+                              #{tag}
+                            </span>
+                          ))}
+                          {task.tags.length > 2 && (
+                            <span className="px-2 py-1 text-gray-400 text-xs">+{task.tags.length - 2}</span>
+                          )}
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -507,12 +539,23 @@ export default function ProjectDetailPage() {
                       )}
                     </div>
                   </div>
-                  {expandedTasks.has(task._id) && task.contentHtml && (
+                  {expandedTasks.has(task._id) && (
                     <div className="mt-4 pt-4 border-t border-gray-700">
-                      <div 
-                        className="text-gray-300 prose prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: task.contentHtml }}
-                      />
+                      {task.contentHtml && (
+                        <div 
+                          className="text-gray-300 prose prose-invert max-w-none mb-3"
+                          dangerouslySetInnerHTML={{ __html: task.contentHtml }}
+                        />
+                      )}
+                      {task.tags && task.tags.length > 0 && (
+                        <div className="flex gap-2 flex-wrap">
+                          {task.tags.map((tag: string, index: number) => (
+                            <span key={index} className="px-2 py-1 bg-gray-700 text-gray-300 rounded text-sm">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </PrismCard>
@@ -557,6 +600,15 @@ export default function ProjectDetailPage() {
                     <option value="documentation">Documentation</option>
                     <option value="link">Link</option>
                     <option value="other">Other</option>
+                  </select>
+                  <select
+                    value={newRefPriority}
+                    onChange={(e) => setNewRefPriority(e.target.value)}
+                    className="p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  >
+                    <option value="LOW">🌌 Nebula (Low)</option>
+                    <option value="MEDIUM">⭐ Stellar (Medium)</option>
+                    <option value="HIGH">💥 Supernova (High)</option>
                   </select>
                   {newRefCategory === 'snippet' && (
                     <select
@@ -619,6 +671,9 @@ export default function ProjectDetailPage() {
                       <h3 className="text-lg font-semibold text-white">{ref.title}</h3>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(ref.category)}`}>
                         {ref.category}
+                      </span>
+                      <span className={`text-sm ${getPriorityColor(ref.priority || 'MEDIUM')}`}>
+                        {cosmicPriorities[ref.priority || 'MEDIUM'].emoji} {cosmicPriorities[ref.priority || 'MEDIUM'].name}
                       </span>
                       {ref.tags && ref.tags.length > 0 && (
                         <div className="flex gap-1">

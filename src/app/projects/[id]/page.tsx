@@ -274,13 +274,12 @@ export default function ProjectDetailPage() {
         <div className="mb-8">
           <button
             onClick={() => router.push('/')}
-            className="group relative inline-flex items-center gap-2 px-4 py-2 mb-4"
+            className="group inline-flex items-center gap-2 mb-4 text-gray-400 hover:text-white transition-colors"
           >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500 blur-sm" />
-            <div className="relative flex items-center gap-2 px-4 py-2 bg-black rounded-lg">
-              <ChevronLeft className="w-4 h-4" />
-              <span className="text-gray-300 group-hover:text-white transition-colors">Back to Projects</span>
-            </div>
+            <span className="text-xl">←</span>
+            <span className="border-b border-transparent group-hover:border-purple-400 transition-colors">
+              Back to Projects
+            </span>
           </button>
           
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
@@ -311,15 +310,17 @@ export default function ProjectDetailPage() {
         {/* Main Tabs Container */}
         <div className="relative mb-8">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-yellow-500/30 rounded-xl blur-sm" />
-          <div className="relative bg-gray-900/90 backdrop-blur-sm rounded-xl p-2">
-            <div className="flex justify-center gap-2">
+          <div className="relative bg-gray-900/90 backdrop-blur-sm rounded-xl p-1">
+            <div className="grid grid-cols-2 gap-1">
               <button
                 onClick={() => {
                   setActiveTab('tasks')
                   setCurrentPage(1)
                 }}
-                className={`relative px-8 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === 'tasks' ? 'text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                className={`relative py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'tasks' 
+                    ? 'text-white bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
                 Tasks
@@ -329,8 +330,10 @@ export default function ProjectDetailPage() {
                   setActiveTab('references')
                   setCurrentPage(1)
                 }}
-                className={`relative px-8 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === 'references' ? 'text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                className={`relative py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'references' 
+                    ? 'text-white bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
                 References
@@ -345,8 +348,8 @@ export default function ProjectDetailPage() {
             {/* Task Status Tabs Container */}
             <div className="relative mb-6">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-700/30 to-gray-600/30 rounded-xl blur-sm" />
-              <div className="relative bg-gray-800/50 backdrop-blur-sm rounded-xl p-2">
-                <div className="flex justify-center gap-2">
+              <div className="relative bg-gray-800/50 backdrop-blur-sm rounded-xl p-1">
+                <div className="grid grid-cols-3 gap-1">
                   {(['active', 'completed', 'deleted'] as TaskStatus[]).map((status) => (
                     <button
                       key={status}
@@ -354,11 +357,11 @@ export default function ProjectDetailPage() {
                         setTaskTab(status)
                         setCurrentPage(1)
                       }}
-                      className={`relative px-6 py-2 rounded-lg transition-all capitalize ${
+                      className={`relative py-2 rounded-lg transition-all capitalize ${
                         taskTab === status 
-                          ? status === 'active' ? 'text-purple-300 bg-purple-500/20' :
-                            status === 'completed' ? 'text-green-300 bg-green-500/20' :
-                            'text-red-300 bg-red-500/20'
+                          ? status === 'active' ? 'text-purple-300 bg-gradient-to-r from-purple-500/30 to-purple-600/30 shadow-md' :
+                            status === 'completed' ? 'text-green-300 bg-gradient-to-r from-green-500/30 to-green-600/30 shadow-md' :
+                            'text-red-300 bg-gradient-to-r from-red-500/30 to-red-600/30 shadow-md'
                           : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                       }`}
                     >

@@ -1,20 +1,22 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Trash2, Archive } from 'lucide-react'
+import { Plus, Trash2, Archive, Search, Command, Download, Upload } from 'lucide-react'
 import CurrentPriority from '@/components/CurrentPriority'
 import ProjectCard from '@/components/ProjectCard'
 import PrismCard from '@/components/PrismCard'
+import SearchModal from '@/components/SearchModal'
 import { Toaster, toast } from 'sonner'
 
 export default function Home() {
   const [selectedTheme, setSelectedTheme] = useState<string>('sun')
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false)
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [showNewProject, setShowNewProject] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   
   const themes = useMemo(() => [
     { id: 'moon', icon: '🌙', name: 'Moon', bgClass: 'from-slate-900 via-blue-900 to-indigo-950' },
@@ -25,6 +27,21 @@ export default function Home() {
     { id: 'saturn', icon: '🪐', name: 'Saturn', bgClass: 'from-purple-900 via-fuchsia-900 to-pink-900' },
     { id: 'sparkle', icon: '✨', name: 'Sparkle', bgClass: 'from-pink-900 via-rose-900 to-purple-900' }
   ], [])
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('cosmicboard-theme')
+    const hasSeenAnimation = localStorage.getItem('cosmicboard-animation-seen')
+    
+    if (savedTheme && themes.find(t => t.id === savedTheme)) {
+      setSelectedTheme(savedTheme)
+      setIsAutoPlaying(false)
+    } else if (!hasSeenAnimation) {
+      // First time visitor - show animation
+      setIsAutoPlaying(true)
+      localStorage.setItem('cosmicboard-animation-seen', 'true')
+    }
+  }, [themes])
 
   // Auto-play themes on mount
   useEffect(() => {
@@ -48,6 +65,7 @@ export default function Home() {
   const handleThemeSelect = (themeId: string) => {
     setIsAutoPlaying(false)
     setSelectedTheme(themeId)
+    localStorage.setItem('cosmicboard-theme', themeId)
   }
 
   const currentTheme = themes.find(t => t.id === selectedTheme) || themes[1]
@@ -68,6 +86,69 @@ export default function Home() {
   useEffect(() => {
     fetchProjects()
   }, [])
+
+  // Keyboard shortcut for search (Cmd+K or Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setShowSearch(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/export')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `cosmicboard-backup-${Date.now()}.json`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Data exported successfully!')
+    } catch (error) {
+      console.error('Export failed:', error)
+      toast.error('Failed to export data')
+    }
+  }
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      
+      const response = await fetch('/api/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      const result = await response.json()
+      
+      if (response.ok) {
+        toast.success(`Import successful! Projects: ${result.imported.projects}, Tasks: ${result.imported.tasks}, References: ${result.imported.references}`)
+        fetchProjects()
+      } else {
+        toast.error(result.error || 'Import failed')
+      }
+    } catch (error) {
+      console.error('Import failed:', error)
+      toast.error('Failed to import data - invalid file format')
+    }
+    
+    // Reset file input
+    event.target.value = ''
+  }
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,6 +182,7 @@ export default function Home() {
   return (
     <div className={`min-h-screen bg-gradient-to-br ${currentTheme.bgClass} transition-all duration-1000`}>
       <Toaster position="top-right" theme="dark" />
+      <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} />
       
       {/* Theme Selector */}
       <div className="pt-8 pb-2 px-4">
@@ -145,6 +227,16 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <button
+              onClick={() => setShowSearch(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors group"
+            >
+              <Search className="w-4 h-4" />
+              Search
+              <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/20 rounded text-xs">
+                <Command className="w-3 h-3" />K
+              </kbd>
+            </button>
+            <button
               onClick={() => setShowNewProject(true)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
             >
@@ -165,6 +257,24 @@ export default function Home() {
               <Trash2 className="w-4 h-4" />
               Recycle Bin
             </a>
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors"
+              title="Export all data"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+            <label className="flex items-center gap-2 px-4 py-2 bg-orange-500/20 text-orange-400 rounded-lg hover:bg-orange-500/30 transition-colors cursor-pointer">
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">Import</span>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import useSWR, { mutate } from 'swr'
 import PrismCard from '@/components/PrismCard'
+import MarkdownRenderer from '@/components/MarkdownRenderer'
 import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import Prism from 'prismjs'
 import 'prismjs/themes/prism-tomorrow.css'
@@ -715,17 +716,7 @@ export default function ProjectDetailPage() {
                   </div>
                   {expandedRefs.has(ref._id) && (
                     <div className="mt-4 pt-4 border-t border-gray-700">
-                      {ref.category === 'snippet' ? (
-                        <pre className="overflow-x-auto">
-                          <code className={`language-${detectLanguage(ref.content, ref.category)}`}>
-                            {ref.content}
-                          </code>
-                        </pre>
-                      ) : (
-                        <pre className="bg-gray-800/50 p-4 rounded-lg text-gray-300 overflow-x-auto whitespace-pre-wrap">
-                          {ref.content}
-                        </pre>
-                      )}
+                      <MarkdownRenderer content={ref.content} />
                       {ref.tags && ref.tags.length > 0 && (
                         <div className="flex gap-2 flex-wrap mt-4">
                           {ref.tags.map((tag: string, index: number) => (

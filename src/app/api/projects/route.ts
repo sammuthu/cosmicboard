@@ -1,40 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectMongo from '@/lib/db';
-import Project from '@/models/Project';
-import Task from '@/models/Task';
-import Reference from '@/models/Reference';
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    await connectMongo();
-    
-    const projects = await Project.find().sort({ createdAt: -1 });
-    
-    // Get task and reference counts for each project
-    const projectsWithCounts = await Promise.all(
-      projects.map(async (project) => {
-        const [tasks, references] = await Promise.all([
-          Task.find({ projectId: project._id }),
-          Reference.find({ projectId: project._id })
-        ]);
-        
-        const active = tasks.filter(t => t.status === 'ACTIVE').length;
-        const completed = tasks.filter(t => t.status === 'COMPLETED').length;
-        const deleted = tasks.filter(t => t.status === 'DELETED').length;
-        
-        const totalReferences = references.length;
-        const snippets = references.filter(r => r.category === 'snippet').length;
-        const documentation = references.filter(r => r.category === 'documentation').length;
-        
-        return {
-          ...project.toObject(),
-          counts: { 
-            tasks: { active, completed, deleted },
-            references: { total: totalReferences, snippets, documentation }
+    const projects = await prisma.project.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: {
+            tasks: true,
+            references: true
           }
-        };
-      })
-    );
+        },
+        tasks: {
+          select: {
+            status: true
+          }
+        },
+        references: {
+          select: {
+            category: true
+          }
+        }
+      }
+    });
+    
+    // Transform the data to match the expected format
+    const projectsWithCounts = projects.map(project => {
+      const active = project.tasks.filter(t => t.status === 'ACTIVE').length;
+      const completed = project.tasks.filter(t => t.status === 'COMPLETED').length;
+      const deleted = project.tasks.filter(t => t.status === 'DELETED').length;
+      
+      const totalReferences = project._count.references;
+      const snippets = project.references.filter(r => r.category === 'SNIPPET').length;
+      const documentation = project.references.filter(r => r.category === 'DOCUMENTATION').length;
+      
+      // Remove the included relations from the response
+      const { tasks, references, _count, ...projectData } = project;
+      
+      return {
+        ...projectData,
+        _id: project.id, // For backward compatibility
+        counts: { 
+          tasks: { active, completed, deleted },
+          references: { total: totalReferences, snippets, documentation }
+        }
+      };
+    });
     
     return NextResponse.json(projectsWithCounts);
   } catch (error) {
@@ -45,8 +57,6 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await connectMongo();
-    
     const body = await request.json();
     const { name, description } = body;
     
@@ -54,13 +64,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
     
-    const project = await Project.create({ name, description });
+    const project = await prisma.project.create({
+      data: { 
+        name, 
+        description,
+        metadata: {} // Initialize with empty JSON object
+      }
+    });
     
-    return NextResponse.json(project, { status: 201 });
+    return NextResponse.json({ ...project, _id: project.id }, { status: 201 });
   } catch (error: any) {
     console.error('POST /api/projects error:', error);
     
-    if (error.code === 11000) {
+    if (error.code === 'P2002') {
       return NextResponse.json({ error: 'Project name already exists' }, { status: 400 });
     }
     

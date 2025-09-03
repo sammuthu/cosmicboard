@@ -1,0 +1,42 @@
+# CosmicBoard Web Application
+
+A cosmic-themed task and reference management system built with Next.js and MongoDB.
+
+## Related Projects
+- **Mobile Version**: ~/Projects/cosmicboard-mobile
+  - React Native app with local storage
+  - Shares data models and business logic
+  - Uses same JSON structure for compatibility
+  - Premium IAP for web sync functionality
+
+## Important Notes
+- When making changes to data models or core features, consider updating both web and mobile versions
+- The web version uses MongoDB for data persistence
+- Mobile app will sync with this web version via premium IAP
+- Maintain feature parity where possible between platforms
+
+## Tech Stack
+- Next.js 15.3.4 with App Router
+- MongoDB with Mongoose
+- TypeScript
+- Tailwind CSS
+- SWR for data fetching
+
+## Features
+- Project management
+- Task tracking with cosmic priorities (SUPERNOVA, STELLAR, NEBULA)
+- Reference storage (code snippets and documentation)
+- Tags and search functionality
+- Markdown support with syntax highlighting
+- Export/Import functionality
+
+## Development
+```bash
+npm run dev      # Start development server on port 7777
+npm run build    # Build for production
+npm run start    # Start production server
+```
+
+## Access
+- Local: http://localhost:7777
+- Domain: http://cosmic.board (via nginx reverse proxy)

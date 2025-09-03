@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/sammuthu-dev-site.iml" filepath="$PROJECT_DIR$/sammuthu-dev-site.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/cosmicboard.iml" filepath="$PROJECT_DIR$/.idea/cosmicboard.iml" />
     </modules>
   </component>
 </project>

@@ -132,15 +132,14 @@ export default function ProjectDetailPage() {
         metadata: newRefCategory === 'snippet' ? { language: newRefLanguage } : {},
       })
       
-        await mutate(`/api/references?projectId=${projectId}`)
-        setNewRefTitle('')
-        setNewRefContent('')
-        setNewRefCategory('snippet')
-        setNewRefPriority('MEDIUM')
-        setNewRefTags('')
-        setNewRefLanguage('javascript')
-        setShowNewReference(false)
-      }
+      await mutate(`/api/references?projectId=${projectId}`)
+      setNewRefTitle('')
+      setNewRefContent('')
+      setNewRefCategory('snippet')
+      setNewRefPriority('MEDIUM')
+      setNewRefTags('')
+      setNewRefLanguage('javascript')
+      setShowNewReference(false)
     } catch (error) {
       console.error('Error creating reference:', error)
     }

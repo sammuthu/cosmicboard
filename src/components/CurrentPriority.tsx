@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import PrismCard from './PrismCard'
 import { formatDate, isOverdue } from '@/lib/utils'
 import { CheckCircle, Clock, Calendar } from 'lucide-react'
+import { apiClient } from '@/lib/api-client'
 
 interface Task {
   _id: string
@@ -13,9 +14,9 @@ interface Task {
   dueDate?: string
   priority: 'LOW' | 'MEDIUM' | 'HIGH'
   projectId: {
-    _id: string
+    id: string
     name: string
-  }
+  } | string
 }
 
 export default function CurrentPriority() {
@@ -25,8 +26,7 @@ export default function CurrentPriority() {
 
   const fetchCurrentPriority = async () => {
     try {
-      const res = await fetch('/api/current-priority')
-      const data = await res.json()
+      const data = await apiClient.get('/current-priority')
       setTask(data)
     } catch (error) {
       console.error('Failed to fetch current priority:', error)
@@ -43,7 +43,7 @@ export default function CurrentPriority() {
     if (!task) return
     
     try {
-      await fetch(`/api/tasks/${task._id}/complete`, { method: 'POST' })
+      await apiClient.post(`/tasks/${task._id}/complete`, {})
       fetchCurrentPriority()
     } catch (error) {
       console.error('Failed to complete task:', error)
@@ -57,11 +57,7 @@ export default function CurrentPriority() {
     tomorrow.setDate(tomorrow.getDate() + 1)
     
     try {
-      await fetch(`/api/tasks/${task._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dueDate: tomorrow })
-      })
+      await apiClient.put(`/tasks/${task._id}`, { dueDate: tomorrow })
       fetchCurrentPriority()
     } catch (error) {
       console.error('Failed to snooze task:', error)
@@ -102,16 +98,20 @@ export default function CurrentPriority() {
     LOW: 'Nebula'
   }
 
+  // Handle both string and object projectId
+  const projectId = typeof task.projectId === 'string' ? task.projectId : task.projectId.id
+  const projectName = typeof task.projectId === 'string' ? 'Project' : task.projectId.name
+
   return (
     <PrismCard className="mb-8">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-purple-400 mb-2">🎯 Current Priority</h2>
           <button
-            onClick={() => router.push(`/projects/${task.projectId._id}`)}
+            onClick={() => router.push(`/projects/${projectId}`)}
             className="inline-flex items-center bg-blue-500/20 text-blue-400 text-sm px-3 py-1 rounded-full hover:bg-blue-500/30 transition-colors"
           >
-            {task.projectId.name}
+            {projectName}
           </button>
         </div>
         <span className={`px-3 py-1 rounded-full text-sm font-medium border ${priorityColors[task.priority]}`}>
@@ -121,7 +121,7 @@ export default function CurrentPriority() {
       
       <h3 
         className="text-2xl font-bold text-white mb-4 cursor-pointer hover:text-purple-300 transition-colors"
-        onClick={() => router.push(`/projects/${task.projectId._id}`)}
+        onClick={() => router.push(`/projects/${projectId}`)}
       >
         {task.title}
       </h3>

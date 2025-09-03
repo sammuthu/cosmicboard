@@ -1,5 +1,5 @@
 // API client for frontend to communicate with backend
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7778';
 const USE_EXTERNAL_BACKEND = process.env.NEXT_PUBLIC_USE_EXTERNAL_BACKEND === 'true';
 
 // Get the appropriate API URL

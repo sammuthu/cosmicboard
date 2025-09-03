@@ -5,22 +5,57 @@ import { useParams, useRouter } from 'next/navigation'
 import useSWR, { mutate } from 'swr'
 import PrismCard from '@/components/PrismCard'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
+import SearchableSelect from '@/components/SearchableSelect'
 import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
-import Prism from 'prismjs'
-import 'prismjs/themes/prism-tomorrow.css'
-import 'prismjs/components/prism-javascript'
-import 'prismjs/components/prism-typescript'
-import 'prismjs/components/prism-jsx'
-import 'prismjs/components/prism-tsx'
-import 'prismjs/components/prism-css'
-import 'prismjs/components/prism-json'
-import 'prismjs/components/prism-python'
-import 'prismjs/components/prism-bash'
-import 'prismjs/components/prism-sql'
-import 'prismjs/components/prism-markdown'
 
-// Removed ReactQuill due to React 18+ compatibility issues
+// Language options for code snippets
+const languageOptions = [
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'typescript', label: 'TypeScript' },
+  { value: 'python', label: 'Python' },
+  { value: 'java', label: 'Java' },
+  { value: 'c', label: 'C' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'csharp', label: 'C#' },
+  { value: 'go', label: 'Go' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'swift', label: 'Swift' },
+  { value: 'kotlin', label: 'Kotlin' },
+  { value: 'ruby', label: 'Ruby' },
+  { value: 'php', label: 'PHP' },
+  { value: 'scala', label: 'Scala' },
+  { value: 'r', label: 'R' },
+  { value: 'dart', label: 'Dart' },
+  { value: 'bash', label: 'Bash/Shell' },
+  { value: 'sql', label: 'SQL' },
+  { value: 'html', label: 'HTML' },
+  { value: 'css', label: 'CSS' },
+  { value: 'scss', label: 'SCSS/Sass' },
+  { value: 'json', label: 'JSON' },
+  { value: 'xml', label: 'XML' },
+  { value: 'yaml', label: 'YAML' },
+  { value: 'markdown', label: 'Markdown' },
+  { value: 'dockerfile', label: 'Dockerfile' },
+  { value: 'graphql', label: 'GraphQL' },
+  { value: 'solidity', label: 'Solidity' },
+  { value: 'elixir', label: 'Elixir' },
+  { value: 'haskell', label: 'Haskell' },
+  { value: 'lua', label: 'Lua' },
+  { value: 'matlab', label: 'MATLAB' },
+  { value: 'perl', label: 'Perl' },
+  { value: 'powershell', label: 'PowerShell' },
+  { value: 'nginx', label: 'Nginx' },
+  { value: 'apache', label: 'Apache' },
+  { value: 'makefile', label: 'Makefile' },
+  { value: 'cmake', label: 'CMake' },
+  { value: 'terraform', label: 'Terraform' },
+  { value: 'jsx', label: 'JSX' },
+  { value: 'tsx', label: 'TSX' },
+  { value: 'vue', label: 'Vue' },
+  { value: 'svelte', label: 'Svelte' },
+  { value: 'plaintext', label: 'Plain Text' }
+].sort((a, b) => a.label.localeCompare(b.label))
 
 const fetcher = (url: string) => {
   // Extract endpoint from URL (remove /api prefix since apiClient handles it)
@@ -609,52 +644,13 @@ export default function ProjectDetailPage() {
                     <option value="HIGH">💥 Supernova (High)</option>
                   </select>
                   {newRefCategory === 'snippet' && (
-                    <select
+                    <SearchableSelect
+                      options={languageOptions}
                       value={newRefLanguage}
-                      onChange={(e) => setNewRefLanguage(e.target.value)}
-                      className="p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                    >
-                      <option value="javascript">JavaScript</option>
-                      <option value="typescript">TypeScript</option>
-                      <option value="python">Python</option>
-                      <option value="java">Java</option>
-                      <option value="c">C</option>
-                      <option value="cpp">C++</option>
-                      <option value="csharp">C#</option>
-                      <option value="go">Go</option>
-                      <option value="rust">Rust</option>
-                      <option value="swift">Swift</option>
-                      <option value="kotlin">Kotlin</option>
-                      <option value="ruby">Ruby</option>
-                      <option value="php">PHP</option>
-                      <option value="scala">Scala</option>
-                      <option value="r">R</option>
-                      <option value="dart">Dart</option>
-                      <option value="bash">Bash/Shell</option>
-                      <option value="sql">SQL</option>
-                      <option value="html">HTML</option>
-                      <option value="css">CSS</option>
-                      <option value="scss">SCSS</option>
-                      <option value="json">JSON</option>
-                      <option value="xml">XML</option>
-                      <option value="yaml">YAML</option>
-                      <option value="markdown">Markdown</option>
-                      <option value="dockerfile">Dockerfile</option>
-                      <option value="graphql">GraphQL</option>
-                      <option value="solidity">Solidity</option>
-                      <option value="elixir">Elixir</option>
-                      <option value="haskell">Haskell</option>
-                      <option value="lua">Lua</option>
-                      <option value="matlab">MATLAB</option>
-                      <option value="perl">Perl</option>
-                      <option value="powershell">PowerShell</option>
-                      <option value="nginx">Nginx</option>
-                      <option value="apache">Apache</option>
-                      <option value="makefile">Makefile</option>
-                      <option value="cmake">CMake</option>
-                      <option value="terraform">Terraform</option>
-                      <option value="ansible">Ansible</option>
-                    </select>
+                      onChange={setNewRefLanguage}
+                      placeholder="Select language"
+                      className="min-w-[200px]"
+                    />
                   )}
                 </div>
                 <textarea

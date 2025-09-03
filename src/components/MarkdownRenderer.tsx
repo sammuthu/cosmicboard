@@ -87,15 +87,39 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
           <td className="px-4 py-2 text-sm text-gray-300">{children}</td>
         ),
         code({ inline, className, children, ...props }: any) {
-          const match = /language-(\w+)/.exec(className || '');
+          // Improved regex to handle various language identifiers including c++, c#, etc.
+          const match = /language-([\w+#-]+)/i.exec(className || '');
           const codeString = String(children).replace(/\n$/, '');
           const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
           
           if (!inline && match) {
+            // Map certain language identifiers to their react-syntax-highlighter equivalents
+            const languageMap: { [key: string]: string } = {
+              'c++': 'cpp',
+              'c#': 'csharp',
+              'objective-c': 'objectivec',
+              'f#': 'fsharp',
+              'shell': 'bash',
+              'sh': 'bash',
+              'yml': 'yaml',
+              'ts': 'typescript',
+              'js': 'javascript',
+              'py': 'python',
+              'rb': 'ruby',
+              'ps1': 'powershell',
+              'dockerfile': 'docker',
+              'nginxconf': 'nginx',
+              'apache': 'apacheconf',
+              'vue': 'javascript',
+              'svelte': 'javascript',
+            };
+            
+            const language = languageMap[match[1].toLowerCase()] || match[1].toLowerCase();
+            
             return (
               <div className="relative group my-4">
-                <div className="absolute top-0 right-0 flex items-center gap-2 p-2">
-                  <span className="text-xs text-gray-400">{match[1]}</span>
+                <div className="absolute top-0 right-0 flex items-center gap-2 p-2 z-10">
+                  <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">{match[1]}</span>
                   <button
                     onClick={() => copyToClipboard(codeString, codeId)}
                     className="p-1.5 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
@@ -110,7 +134,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
                 </div>
                 <SyntaxHighlighter
                   style={atomDark}
-                  language={match[1]}
+                  language={language}
                   PreTag="div"
                   customStyle={{
                     margin: 0,
@@ -118,7 +142,10 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
                     padding: '1rem',
                     paddingTop: '2.5rem',
                     fontSize: '0.875rem',
+                    backgroundColor: '#1e1e1e',
                   }}
+                  showLineNumbers={false}
+                  wrapLines={true}
                   {...props}
                 >
                   {codeString}
@@ -127,8 +154,33 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
             );
           }
           
+          // For code blocks without language specification
+          if (!inline && !match) {
+            return (
+              <div className="relative group my-4">
+                <div className="absolute top-0 right-0 p-2 z-10">
+                  <button
+                    onClick={() => copyToClipboard(codeString, codeId)}
+                    className="p-1.5 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                    title="Copy code"
+                  >
+                    {copiedCode === codeId ? (
+                      <Check className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+                <pre className="bg-gray-900 text-gray-300 p-4 pt-10 rounded-lg overflow-x-auto">
+                  <code className="text-sm font-mono">{codeString}</code>
+                </pre>
+              </div>
+            );
+          }
+          
+          // Inline code
           return (
-            <code className="px-1.5 py-0.5 bg-gray-800 text-purple-300 rounded text-sm" {...props}>
+            <code className="px-1.5 py-0.5 bg-gray-800 text-purple-300 rounded text-sm font-mono" {...props}>
               {children}
             </code>
           );

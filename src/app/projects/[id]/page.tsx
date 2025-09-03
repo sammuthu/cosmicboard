@@ -6,6 +6,7 @@ import useSWR, { mutate } from 'swr'
 import PrismCard from '@/components/PrismCard'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
 import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { apiClient } from '@/lib/api-client'
 import Prism from 'prismjs'
 import 'prismjs/themes/prism-tomorrow.css'
 import 'prismjs/components/prism-javascript'
@@ -21,7 +22,11 @@ import 'prismjs/components/prism-markdown'
 
 // Removed ReactQuill due to React 18+ compatibility issues
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+const fetcher = (url: string) => {
+  // Extract endpoint from URL (remove /api prefix since apiClient handles it)
+  const endpoint = url.replace('/api', '')
+  return apiClient.get(endpoint)
+}
 
 type TabType = 'tasks' | 'references'
 type TaskStatus = 'active' | 'completed' | 'deleted'
@@ -83,20 +88,15 @@ export default function ProjectDetailPage() {
     if (!newTaskTitle.trim()) return
     
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          title: newTaskTitle,
-          contentHtml: newTaskContent ? `<p>${newTaskContent.replace(/\n/g, '<br>')}</p>` : '',
-          priority: newTaskPriority,
-          dueDate: newTaskDueDate || undefined,
-          tags: newTaskTags.split(',').map(tag => tag.trim()).filter(Boolean),
-        }),
+      await apiClient.post('/tasks', {
+        projectId,
+        title: newTaskTitle,
+        contentHtml: newTaskContent ? `<p>${newTaskContent.replace(/\n/g, '<br>')}</p>` : '',
+        priority: newTaskPriority,
+        dueDate: newTaskDueDate || undefined,
+        tags: newTaskTags.split(',').map(tag => tag.trim()).filter(Boolean),
       })
       
-      if (response.ok) {
         await mutate(`/api/tasks?projectId=${projectId}`)
         setNewTaskTitle('')
         setNewTaskContent('')
@@ -104,7 +104,6 @@ export default function ProjectDetailPage() {
         setNewTaskDueDate('')
         setNewTaskTags('')
         setShowNewTask(false)
-      }
     } catch (error) {
       console.error('Error creating task:', error)
     }
@@ -113,21 +112,26 @@ export default function ProjectDetailPage() {
   const handleCreateReference = async () => {
     if (!newRefTitle.trim() || !newRefContent.trim()) return
     
+    // Wrap code snippets in markdown code blocks with language specifier
+    let formattedContent = newRefContent
+    if (newRefCategory === 'snippet') {
+      // Check if content is already wrapped in code blocks
+      if (!newRefContent.startsWith('```')) {
+        formattedContent = `\`\`\`${newRefLanguage}\n${newRefContent}\n\`\`\``
+      }
+    }
+    
     try {
-      const response = await fetch('/api/references', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          title: newRefTitle,
-          content: newRefContent,
-          category: newRefCategory,
-          priority: newRefPriority,
-          tags: newRefTags.split(',').map(tag => tag.trim()).filter(Boolean),
-        }),
+      await apiClient.post('/references', {
+        projectId,
+        title: newRefTitle,
+        content: formattedContent,
+        category: newRefCategory,
+        priority: newRefPriority,
+        tags: newRefTags.split(',').map(tag => tag.trim()).filter(Boolean),
+        metadata: newRefCategory === 'snippet' ? { language: newRefLanguage } : {},
       })
       
-      if (response.ok) {
         await mutate(`/api/references?projectId=${projectId}`)
         setNewRefTitle('')
         setNewRefContent('')
@@ -144,15 +148,14 @@ export default function ProjectDetailPage() {
 
   const updateTaskStatus = async (taskId: string, status: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      })
-      
-      if (response.ok) {
-        await mutate(`/api/tasks?projectId=${projectId}`)
+      if (status === 'COMPLETED') {
+        await apiClient.post(`/tasks/${taskId}/complete`, {})
+      } else if (status === 'DELETED') {
+        await apiClient.delete(`/tasks/${taskId}/delete`)
+      } else if (status === 'ACTIVE') {
+        await apiClient.post(`/tasks/${taskId}/restore`, {})
       }
+      await mutate(`/api/tasks?projectId=${projectId}`)
     } catch (error) {
       console.error('Error updating task:', error)
     }
@@ -160,13 +163,8 @@ export default function ProjectDetailPage() {
 
   const deleteReference = async (refId: string) => {
     try {
-      const response = await fetch(`/api/references/${refId}`, {
-        method: 'DELETE',
-      })
-      
-      if (response.ok) {
-        await mutate(`/api/references?projectId=${projectId}`)
-      }
+      await apiClient.delete(`/references/${refId}`)
+      await mutate(`/api/references?projectId=${projectId}`)
     } catch (error) {
       console.error('Error deleting reference:', error)
     }
@@ -620,11 +618,43 @@ export default function ProjectDetailPage() {
                       <option value="javascript">JavaScript</option>
                       <option value="typescript">TypeScript</option>
                       <option value="python">Python</option>
-                      <option value="bash">Bash</option>
+                      <option value="java">Java</option>
+                      <option value="c">C</option>
+                      <option value="cpp">C++</option>
+                      <option value="csharp">C#</option>
+                      <option value="go">Go</option>
+                      <option value="rust">Rust</option>
+                      <option value="swift">Swift</option>
+                      <option value="kotlin">Kotlin</option>
+                      <option value="ruby">Ruby</option>
+                      <option value="php">PHP</option>
+                      <option value="scala">Scala</option>
+                      <option value="r">R</option>
+                      <option value="dart">Dart</option>
+                      <option value="bash">Bash/Shell</option>
                       <option value="sql">SQL</option>
+                      <option value="html">HTML</option>
                       <option value="css">CSS</option>
+                      <option value="scss">SCSS</option>
                       <option value="json">JSON</option>
+                      <option value="xml">XML</option>
+                      <option value="yaml">YAML</option>
                       <option value="markdown">Markdown</option>
+                      <option value="dockerfile">Dockerfile</option>
+                      <option value="graphql">GraphQL</option>
+                      <option value="solidity">Solidity</option>
+                      <option value="elixir">Elixir</option>
+                      <option value="haskell">Haskell</option>
+                      <option value="lua">Lua</option>
+                      <option value="matlab">MATLAB</option>
+                      <option value="perl">Perl</option>
+                      <option value="powershell">PowerShell</option>
+                      <option value="nginx">Nginx</option>
+                      <option value="apache">Apache</option>
+                      <option value="makefile">Makefile</option>
+                      <option value="cmake">CMake</option>
+                      <option value="terraform">Terraform</option>
+                      <option value="ansible">Ansible</option>
                     </select>
                   )}
                 </div>

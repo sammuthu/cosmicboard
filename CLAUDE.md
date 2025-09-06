@@ -2,9 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: Repository Structure
+
+CosmicBoard consists of THREE separate repositories:
+1. **Web Frontend** (THIS REPO): `/Users/sammuthu/Projects/cosmicboard` - Next.js web application
+2. **Backend API**: `/Users/sammuthu/Projects/cosmicboard-backend` - Express.js API server on port 7779
+3. **Mobile App**: `/Users/sammuthu/Projects/cosmicboard-mobile` - React Native (iOS & Android)
+
+**DO NOT** create duplicate backends or mobile apps. Always use the existing repositories above.
+
 ## Project Overview
 
-CosmicBoard is a Next.js-based task management application with AI-augmented features and a cosmic theme system. It's a personal portfolio project showcasing modern web development patterns and AI-assisted workflows.
+CosmicBoard is a multi-platform task management application with AI-augmented features and a cosmic theme system. It's a personal portfolio project showcasing modern web development patterns and AI-assisted workflows.
 
 ## Tech Stack
 
@@ -18,6 +27,7 @@ CosmicBoard is a Next.js-based task management application with AI-augmented fea
 
 ## Development Commands
 
+### Web Frontend (This Repository)
 ```bash
 # Start development server on port 7777 with Turbopack
 npm run dev
@@ -39,6 +49,18 @@ npx prisma generate     # Generate Prisma client
 npx prisma migrate dev   # Run migrations
 npx prisma studio        # Open database GUI
 npx prisma db push      # Sync schema without migration
+```
+
+### Backend API (cosmicboard-backend)
+```bash
+cd /Users/sammuthu/Projects/cosmicboard-backend
+npm run dev  # Runs on port 7779
+```
+
+### Mobile App (cosmicboard-mobile)
+```bash
+cd /Users/sammuthu/Projects/cosmicboard-mobile
+npm start    # Runs Expo on port 8082
 ```
 
 ## Environment Setup
@@ -68,13 +90,15 @@ DATABASE_URL=postgresql://cosmicuser:cosmic123!@localhost:5432/cosmicboard
 
 ### External Backend Support
 
-The application can use either internal Next.js API routes or connect to an external backend:
+**IMPORTANT**: The application uses an external backend at `cosmicboard-backend`:
 
 ```bash
-# Optional: Use external backend API
+# Backend configuration (already set in .env.local)
 NEXT_PUBLIC_USE_EXTERNAL_BACKEND=true
-NEXT_PUBLIC_BACKEND_URL=http://localhost:7778
+NEXT_PUBLIC_BACKEND_URL=http://localhost:7779  # Note: Port 7779, not 7778
 ```
+
+The backend runs separately at `/Users/sammuthu/Projects/cosmicboard-backend` on port 7779.
 
 ## Architecture
 
@@ -82,19 +106,22 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:7778
 
 **IMPORTANT**: The codebase is migrating from MongoDB to PostgreSQL. Current state:
 - MongoDB models in `/src/models/` (Project, Task, Reference)
-- Prisma schema in `/prisma/schema.prisma` for PostgreSQL
+- Prisma schema in `/prisma/schema.prisma` for PostgreSQL (includes new Media model)
 - Some API routes use Mongoose, others use Prisma
+- Media features exclusively use Prisma/PostgreSQL
 - Check individual API route implementations to determine which database is used
 
 ### Directory Structure
 - `/src/app/` - Next.js App Router pages and API routes
 - `/src/components/` - Reusable components using PrismCard design system
+- `/src/components/media/` - Media components (PhotoGallery, ScreenshotCapture, PDFViewer)
 - `/src/models/` - Mongoose models (MongoDB - legacy)
 - `/prisma/` - Prisma schema and migrations (PostgreSQL - current)
-- `/src/lib/` - Database connections, utilities, API client
+- `/src/lib/` - Database connections, utilities, API client, upload handlers
 - `/src/hooks/` - Custom React hooks (keyboard shortcuts, etc.)
 - `/src/types/` - TypeScript type definitions
 - `/src/styles/` - Global styles and cosmic theme animations
+- `/public/uploads/` - Local storage for uploaded media files
 
 ### API Routes Pattern
 
@@ -106,6 +133,10 @@ RESTful endpoints under `/api/` with action-based nested routes:
 - `/api/tasks/[id]/restore` - Restore from recycle bin
 - `/api/tasks/[id]/purge` - Permanent deletion
 - `/api/references` - Reference/documentation management
+- `/api/media` - Media listing and filtering
+- `/api/media/upload` - File upload (photos, PDFs)
+- `/api/media/screenshot` - Screenshot paste handling
+- `/api/media/[id]` - Individual media operations
 - `/api/export` and `/api/import` - Data backup/restore
 - `/api/current-priority` - Current task priority management
 
@@ -130,6 +161,7 @@ Complex cosmic theme architecture with:
 
 1. **Keyboard Shortcuts**: 
    - `Cmd/Ctrl+K` - Global search
+   - `Cmd/Ctrl+V` - Paste screenshots directly
    - Theme switching shortcuts
    - Navigation shortcuts
 
@@ -139,12 +171,21 @@ Complex cosmic theme architecture with:
 
 4. **Markdown Rendering**: Rich text with syntax highlighting for 100+ languages
 
+5. **Media Management**:
+   - **Photos**: Grid gallery with lightbox viewer, thumbnails auto-generated
+   - **Screenshots**: Paste from clipboard, timeline view, auto-naming
+   - **PDFs**: In-app viewer with zoom and page navigation
+   - All media supports rename, delete, and download operations
+
 ## Database Schema
+
+**WARNING**: Never run `prisma migrate reset` or any destructive migration commands without explicit permission, as this will delete all data.
 
 ### PostgreSQL (Prisma) - Current
 - **Project**: id, name, description, metadata (JSONB), timestamps
 - **Task**: id, projectId, priority, status, content, metadata (JSONB), timestamps  
 - **Reference**: id, projectId, title, url, description, metadata (JSONB), timestamps
+- **Media**: id, projectId, type (photo/screenshot/pdf), name, url, thumbnailUrl, size, mimeType, metadata (JSONB), timestamps
 
 ### MongoDB (Mongoose) - Legacy
 - Similar structure but using MongoDB ObjectIds and embedded documents

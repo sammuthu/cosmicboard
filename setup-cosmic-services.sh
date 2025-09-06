@@ -31,8 +31,8 @@ else
     echo "  Run: sudo brew services start dnsmasq"
 fi
 
-# Check CosmicBoard app
-echo -n "CosmicBoard App: "
+# Check CosmicBoard Frontend
+echo -n "CosmicBoard Frontend: "
 if lsof -i :7777 | grep -q LISTEN; then
     echo -e "${GREEN}✓ Running on port 7777${NC}"
 else
@@ -40,11 +40,38 @@ else
     echo "  Run: npm run dev (in cosmicboard directory)"
 fi
 
+# Check CosmicBoard Backend
+echo -n "CosmicBoard Backend: "
+if lsof -i :7778 | grep -q LISTEN; then
+    echo -e "${GREEN}✓ Running on port 7778${NC}"
+    # Check for media endpoints
+    if curl -s http://localhost:7778/api/media > /dev/null 2>&1; then
+        echo -e "  ${GREEN}✓ Media endpoints available${NC}"
+    else
+        echo -e "  ${YELLOW}⚠ Media endpoints not available - restart may be needed${NC}"
+        echo "  Run: ./start.sh --restart-backend"
+    fi
+else
+    echo -e "${RED}✗ Not running${NC}"
+    echo "  Run: cd ../cosmicboard-backend && npm run dev"
+fi
+
+# Check PostgreSQL
+echo -n "PostgreSQL: "
+if docker ps | grep -q "cosmicboard_postgres"; then
+    echo -e "${GREEN}✓ Running in Docker${NC}"
+else
+    echo -e "${RED}✗ Not running${NC}"
+    echo "  Run: cd ../cosmicboard-backend && docker compose up -d"
+fi
+
 echo ""
 echo "🌐 Port Allocation:"
 echo "-------------------"
 echo "Port 80:   Python (in use)"
-echo "Port 7777: CosmicBoard App"
+echo "Port 5432: PostgreSQL (Docker)"
+echo "Port 7777: CosmicBoard Frontend"
+echo "Port 7778: CosmicBoard Backend API"
 echo "Port 8080: Docker (in use)"
 echo "Port 8888: Nginx (reverse proxy)"
 echo ""
@@ -61,9 +88,16 @@ fi
 echo ""
 echo "🔗 Access URLs:"
 echo "---------------"
-echo "Direct:  http://192.168.0.18:7777"
-echo "Proxied: http://192.168.0.18:8888"
-echo "Domain:  http://cosmic.board:8888"
+echo "Frontend Direct:  http://192.168.0.18:7777"
+echo "Backend API:      http://192.168.0.18:7778/api"
+echo "Via Nginx:        http://192.168.0.18:8888"
+echo "Domain:           http://cosmic.board:8888"
+echo ""
+echo "📸 Media Features:"
+echo "-----------------"
+echo "• Photos:      Upload, view in lightbox, rename, delete"
+echo "• Screenshots: Paste with Cmd/Ctrl+V, timeline view"
+echo "• PDFs:        Upload, in-app viewer with zoom"
 echo ""
 
 echo "⚙️  To start all services:"
@@ -75,10 +109,19 @@ echo "2. Configure Mac to use DNSMasq:"
 echo "   sudo mkdir -p /etc/resolver"
 echo "   echo 'nameserver 127.0.0.1' | sudo tee /etc/resolver/board"
 echo ""
-echo "3. Start CosmicBoard:"
-echo "   cd ~/Projects/cosmicboard && npm run dev"
+echo "3. Start CosmicBoard with all services:"
+echo "   cd ~/Projects/cosmicboard && ./start.sh"
+echo ""
+echo "   To force backend restart (for new endpoints):"
+echo "   ./start.sh --restart-backend"
 echo ""
 echo "4. Access at: http://cosmic.board:8888"
+echo ""
+echo "📝 Note: The start.sh script will:"
+echo "   • Run this setup check automatically"
+echo "   • Start/restart backend if needed"
+echo "   • Ensure PostgreSQL is running"
+echo "   • Start the frontend development server"
 echo ""
 
 # Test resolution

@@ -26,7 +26,7 @@ export default function CurrentPriority() {
 
   const fetchCurrentPriority = async () => {
     try {
-      const data = await apiClient.get('/current-priority')
+      const data = await apiClient.get('/tasks/current-priority')
       setTask(data)
     } catch (error) {
       console.error('Failed to fetch current priority:', error)

@@ -1,0 +1,78 @@
+{
+  "expo": {
+    "name": "CosmicBoard",
+    "slug": "cosmicboard-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0a1a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cosmicboard.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to capture photos for your projects.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to select images for your projects.",
+        "NSMicrophoneUsageDescription": "This app may access the microphone for video recording features."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a1a"
+      },
+      "package": "com.cosmicboard.mobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow CosmicBoard to access your camera to capture photos for your projects."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow CosmicBoard to access your photos to select images for your projects.",
+          "savePhotosPermission": "Allow CosmicBoard to save photos to your device.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you select images for your projects.",
+          "cameraPermission": "The app accesses your camera to let you take photos for your projects."
+        }
+      ]
+    ],
+    "scheme": "cosmicboard",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    }
+  }
+}

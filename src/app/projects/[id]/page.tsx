@@ -6,8 +6,12 @@ import useSWR, { mutate } from 'swr'
 import PrismCard from '@/components/PrismCard'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
 import SearchableSelect from '@/components/SearchableSelect'
-import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
+import PhotoGallery from '@/components/media/PhotoGallery'
+import ScreenshotCapture from '@/components/media/ScreenshotCapture'
+import PDFViewer from '@/components/media/PDFViewer'
+import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText } from 'lucide-react'
+import { apiClient, getApiUrl } from '@/lib/api-client'
+import { toast } from 'sonner'
 
 // Language options for code snippets
 const languageOptions = [
@@ -63,7 +67,7 @@ const fetcher = (url: string) => {
   return apiClient.get(endpoint)
 }
 
-type TabType = 'tasks' | 'references'
+type TabType = 'tasks' | 'references' | 'photos' | 'screenshots' | 'pdfs'
 type TaskStatus = 'active' | 'completed' | 'deleted'
 
 export default function ProjectDetailPage() {
@@ -110,12 +114,31 @@ export default function ProjectDetailPage() {
     projectId && activeTab === 'references' ? `/api/references?projectId=${projectId}` : null,
     fetcher
   )
+  
+  const { data: mediaData } = useSWR(
+    projectId && (activeTab === 'photos' || activeTab === 'screenshots' || activeTab === 'pdfs') 
+      ? `/api/media?projectId=${projectId}` : null,
+    fetcher
+  )
+  
+  const photos = mediaData?.filter((m: any) => m.type === 'photo') || []
+  const screenshots = mediaData?.filter((m: any) => m.type === 'screenshot') || []
+  const pdfs = mediaData?.filter((m: any) => m.type === 'pdf') || []
+  
+  // Debug logging
+  if (activeTab === 'screenshots' && mediaData) {
+    console.log('Media data:', mediaData)
+    console.log('Filtered screenshots:', screenshots)
+  }
 
   useEffect(() => {
-    if (expandedRefs.size > 0) {
-      setTimeout(() => {
-        Prism.highlightAll()
-      }, 100)
+    if (expandedRefs.size > 0 && typeof window !== 'undefined') {
+      // Dynamically import Prism only on client side
+      import('prismjs').then((Prism) => {
+        setTimeout(() => {
+          Prism.highlightAll()
+        }, 100)
+      })
     }
   }, [expandedRefs])
 
@@ -201,6 +224,90 @@ export default function ProjectDetailPage() {
       await mutate(`/api/references?projectId=${projectId}`)
     } catch (error) {
       console.error('Error deleting reference:', error)
+    }
+  }
+  
+  const handlePhotoUpload = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('projectId', projectId)
+    formData.append('type', 'photo')
+    
+    try {
+      const response = await fetch(getApiUrl('/media/upload'), {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Upload failed' }))
+        throw new Error(error.error || 'Upload failed')
+      }
+      
+      await mutate(`/api/media?projectId=${projectId}`)
+      toast.success('Photo uploaded successfully')
+    } catch (error) {
+      console.error('Photo upload error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to upload photo')
+    }
+  }
+  
+  const handleScreenshotPaste = async (imageData: string, name: string) => {
+    try {
+      await apiClient.post('/media/screenshot', {
+        projectId,
+        imageData,
+        name
+      })
+      await mutate(`/api/media?projectId=${projectId}`)
+      toast.success('Screenshot saved successfully')
+    } catch (error) {
+      toast.error('Failed to save screenshot')
+    }
+  }
+  
+  const handlePDFUpload = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('projectId', projectId)
+    formData.append('type', 'pdf')
+    
+    try {
+      const response = await fetch(getApiUrl('/media/upload'), {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Upload failed' }))
+        throw new Error(error.error || 'Upload failed')
+      }
+      
+      await mutate(`/api/media?projectId=${projectId}`)
+      toast.success('PDF uploaded successfully')
+    } catch (error) {
+      console.error('PDF upload error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to upload PDF')
+    }
+  }
+  
+  const handleMediaDelete = async (id: string) => {
+    try {
+      await apiClient.delete(`/media/${id}`)
+      await mutate(`/api/media?projectId=${projectId}`)
+      toast.success('Media deleted successfully')
+    } catch (error) {
+      toast.error('Failed to delete media')
+    }
+  }
+  
+  const handleMediaRename = async (id: string, name: string) => {
+    try {
+      await apiClient.put(`/media/${id}`, { name })
+      await mutate(`/api/media?projectId=${projectId}`)
+      toast.success('Media renamed successfully')
+    } catch (error) {
+      toast.error('Failed to rename media')
     }
   }
 
@@ -358,32 +465,76 @@ export default function ProjectDetailPage() {
         <div className="relative mb-8">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-yellow-500/30 rounded-xl blur-sm" />
           <div className="relative bg-gray-900/90 backdrop-blur-sm rounded-xl p-1">
-            <div className="grid grid-cols-2 gap-1">
+            <div className="grid grid-cols-5 gap-1">
               <button
                 onClick={() => {
                   setActiveTab('tasks')
                   setCurrentPage(1)
                 }}
-                className={`relative py-3 rounded-lg font-semibold transition-all ${
+                className={`relative py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
                   activeTab === 'tasks' 
                     ? 'text-white bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 shadow-lg' 
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                Tasks
+                <span className="hidden sm:inline">Tasks</span>
+                <span className="sm:hidden">📋</span>
               </button>
               <button
                 onClick={() => {
                   setActiveTab('references')
                   setCurrentPage(1)
                 }}
-                className={`relative py-3 rounded-lg font-semibold transition-all ${
+                className={`relative py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
                   activeTab === 'references' 
                     ? 'text-white bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 shadow-lg' 
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                References
+                <span className="hidden sm:inline">References</span>
+                <span className="sm:hidden">📚</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('photos')
+                  setCurrentPage(1)
+                }}
+                className={`relative py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === 'photos' 
+                    ? 'text-white bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-blue-500/30 shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Photos</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('screenshots')
+                  setCurrentPage(1)
+                }}
+                className={`relative py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === 'screenshots' 
+                    ? 'text-white bg-gradient-to-r from-green-500/30 via-blue-500/30 to-green-500/30 shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <Camera className="w-4 h-4" />
+                <span className="hidden sm:inline">Screenshots</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('pdfs')
+                  setCurrentPage(1)
+                }}
+                className={`relative py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === 'pdfs' 
+                    ? 'text-white bg-gradient-to-r from-red-500/30 via-orange-500/30 to-red-500/30 shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">PDFs</span>
               </button>
             </div>
           </div>
@@ -812,6 +963,39 @@ export default function ProjectDetailPage() {
               Showing {Math.min((currentPage - 1) * itemsPerPage + 1, activeTab === 'tasks' ? filteredTasks.length : filteredReferences.length)} - {Math.min(currentPage * itemsPerPage, activeTab === 'tasks' ? filteredTasks.length : filteredReferences.length)} of {activeTab === 'tasks' ? filteredTasks.length : filteredReferences.length}
             </div>
           </div>
+        )}
+
+        {/* Photos Tab Content */}
+        {activeTab === 'photos' && (
+          <PhotoGallery
+            photos={photos}
+            projectId={projectId}
+            onUpload={handlePhotoUpload}
+            onDelete={handleMediaDelete}
+            onRename={handleMediaRename}
+          />
+        )}
+        
+        {/* Screenshots Tab Content */}
+        {activeTab === 'screenshots' && (
+          <ScreenshotCapture
+            screenshots={screenshots}
+            projectId={projectId}
+            onPaste={handleScreenshotPaste}
+            onDelete={handleMediaDelete}
+            onRename={handleMediaRename}
+          />
+        )}
+        
+        {/* PDFs Tab Content */}
+        {activeTab === 'pdfs' && (
+          <PDFViewer
+            pdfs={pdfs}
+            projectId={projectId}
+            onUpload={handlePDFUpload}
+            onDelete={handleMediaDelete}
+            onRename={handleMediaRename}
+          />
         )}
 
         {/* Empty state */}

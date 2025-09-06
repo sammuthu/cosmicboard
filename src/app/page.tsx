@@ -72,7 +72,9 @@ export default function Home() {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch('/api/projects')
+      const { getApiUrl } = await import('@/lib/api-client')
+      const res = await fetch(getApiUrl('/projects'))
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
       const data = await res.json()
       setProjects(data)
     } catch (error) {
@@ -102,7 +104,8 @@ export default function Home() {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('/api/export')
+      const { getApiUrl } = await import('@/lib/api-client')
+      const response = await fetch(getApiUrl('/export'))
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -127,7 +130,8 @@ export default function Home() {
       const text = await file.text()
       const data = JSON.parse(text)
       
-      const response = await fetch('/api/import', {
+      const { getApiUrl } = await import('@/lib/api-client')
+      const response = await fetch(getApiUrl('/import'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -154,7 +158,8 @@ export default function Home() {
     e.preventDefault()
     
     try {
-      const res = await fetch('/api/projects', {
+      const { getApiUrl } = await import('@/lib/api-client')
+      const res = await fetch(getApiUrl('/projects'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

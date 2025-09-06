@@ -20,6 +20,7 @@ model Project {
   
   tasks       Task[]
   references  Reference[]
+  media       Media[]
   
   @@index([name])
   @@index([createdAt])
@@ -86,4 +87,32 @@ enum Category {
   API
   TUTORIAL
   REFERENCE
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  projectId    String
+  type         MediaType
+  name         String
+  originalName String
+  url          String
+  thumbnailUrl String?
+  size         Int
+  mimeType     String
+  metadata     Json?     // width, height, pages, description, etc.
+  uploadedBy   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId, type])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum MediaType {
+  photo
+  screenshot
+  pdf
 }

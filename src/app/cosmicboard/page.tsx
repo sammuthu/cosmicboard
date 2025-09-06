@@ -16,7 +16,8 @@ export default function CosmicBoard() {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch('/api/projects')
+      const { getApiUrl } = await import('@/lib/api-client')
+      const res = await fetch(getApiUrl('/projects'))
       const data = await res.json()
       setProjects(data)
     } catch (error) {
@@ -35,7 +36,8 @@ export default function CosmicBoard() {
     e.preventDefault()
     
     try {
-      const res = await fetch('/api/projects', {
+      const { getApiUrl } = await import('@/lib/api-client')
+      const res = await fetch(getApiUrl('/projects'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

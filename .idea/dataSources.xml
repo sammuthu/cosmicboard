@@ -4,12 +4,15 @@
     <data-source source="LOCAL" name="CosmicBoard PostgreSQL" uuid="cosmicboard-postgresql-docker">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
+      <remarks>PostgreSQL database running in Docker container for CosmicBoard backend</remarks>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/cosmicboard</jdbc-url>
-      <user-name>cosmicuser</user-name>
-      <password>cosmic123!</password>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.host.port" />
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+        <property name="com.intellij.clouds.kubernetes.db.container.port" />
+      </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
-      <remarks>PostgreSQL database running in Docker container for CosmicBoard backend</remarks>
     </data-source>
   </component>
 </project>

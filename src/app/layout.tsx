@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CosmicBoard",
-  description: "Cosmic task management with AI",
+  title: "Cosmic Space",
+  description: "Your creative chaos organized with cosmic vibes ✨",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",

@@ -25,6 +25,35 @@ CosmicBoard is a multi-platform task management application with AI-augmented fe
 - **Markdown**: react-markdown with remark-gfm, Prism.js syntax highlighting
 - **Analytics**: Vercel Analytics
 
+## Infrastructure Configuration
+
+**IMPORTANT**: All nginx, DNS, and reverse proxy configurations are centralized in:
+```
+/Users/sammuthu/Projects/nginx-reverse-proxy/
+```
+
+Do NOT place nginx, hosts, or dnsmasq configurations in individual project folders (cosmicboard, cosmicboard-mobile, or cosmicboard-backend).
+
+### Nginx Configuration (Apple Silicon)
+On Apple Silicon Macs, nginx uses different paths:
+- **Nginx Config Directory**: `/opt/homebrew/etc/nginx/`
+- **Servers Directory**: `/opt/homebrew/etc/nginx/servers/`
+- **Symlinks**: Site configs are symlinked from nginx-reverse-proxy to servers directory
+- **Start Command**: `sudo nginx -c /opt/homebrew/etc/nginx/nginx.conf`
+- **Restart Script**: Run `./fix-nginx-ssl.sh` to properly restart nginx with SSL
+
+### Domain Configuration
+- **Primary Domain**: cosmicspace.app
+- **Legacy Domain**: cosmic.board (redirects to cosmicspace.app)
+- **SSL Certificates**: Located in nginx-reverse-proxy/sslCerts/
+- **Nginx Config**: nginx-reverse-proxy/config/sites-available/cosmicspace.app.conf
+- **Hosts File**: nginx-reverse-proxy/config/hosts.d/cosmicspace.hosts
+- **DNS Config**: nginx-reverse-proxy/config/dnsmasq/cosmicspace.conf
+
+### Quick Fixes
+- **Nginx not running**: Run `./fix-nginx-ssl.sh`
+- **SSL certificate errors**: Trust the cert with: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /Users/sammuthu/Projects/nginx-reverse-proxy/sslCerts/cosmicspace.app.crt`
+
 ## Development Commands
 
 ### Web Frontend (This Repository)

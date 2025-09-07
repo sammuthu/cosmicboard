@@ -142,13 +142,65 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 
 print_status "Starting ${APP_NAME} in ${ENV_NAME} mode..."
 
-# Step 0: Run setup-cosmic-services.sh to ensure all services are properly configured
-if [ -f "./setup-cosmic-services.sh" ]; then
-    print_status "Running service setup script..."
-    ./setup-cosmic-services.sh
-    echo ""
-    print_success "Service setup completed"
-    echo ""
+# Step 0: Ensure nginx and SSL are properly configured
+print_status "Checking nginx and SSL configuration..."
+
+# Configuration paths
+NGINX_REVERSE_PROXY="/Users/sammuthu/Projects/nginx-reverse-proxy"
+NGINX_CONFIG_DIR="/opt/homebrew/etc/nginx"
+NGINX_SERVERS_DIR="$NGINX_CONFIG_DIR/servers"
+SSL_CERTS_DIR="$NGINX_REVERSE_PROXY/sslCerts"
+
+# Check if nginx is running
+if ! ps aux | grep -v grep | grep nginx > /dev/null; then
+    print_warning "Nginx is not running. Setting up nginx..."
+    
+    # Check if setup script exists in nginx-reverse-proxy
+    if [ -f "$NGINX_REVERSE_PROXY/setup-nginx-cosmicspace.sh" ]; then
+        print_status "Running nginx setup from nginx-reverse-proxy..."
+        (cd $NGINX_REVERSE_PROXY && ./setup-nginx-cosmicspace.sh)
+    else
+        # Fallback: Do basic setup here
+        print_status "Setting up nginx configuration..."
+        
+        # Ensure servers directory exists
+        mkdir -p $NGINX_SERVERS_DIR
+        
+        # Create symlink for cosmicspace.app
+        if [ ! -L "$NGINX_SERVERS_DIR/cosmicspace.app.conf" ]; then
+            sudo ln -sf $NGINX_REVERSE_PROXY/config/sites-available/cosmicspace.app.conf $NGINX_SERVERS_DIR/cosmicspace.app.conf
+        fi
+        
+        # Check SSL certificates - call script from nginx-reverse-proxy if it exists
+        if [ ! -f "$SSL_CERTS_DIR/cosmicspace.app.crt" ] || [ ! -f "$SSL_CERTS_DIR/cosmicspace.app.key" ]; then
+            if [ -f "$NGINX_REVERSE_PROXY/create-cosmicspace-ssl.sh" ]; then
+                print_status "Creating SSL certificates..."
+                (cd $NGINX_REVERSE_PROXY && ./create-cosmicspace-ssl.sh)
+            else
+                print_warning "SSL certificates missing. Create them in $SSL_CERTS_DIR"
+            fi
+        fi
+        
+        # Start nginx
+        print_status "Starting nginx..."
+        sudo nginx -c $NGINX_CONFIG_DIR/nginx.conf 2>/dev/null
+        sleep 2
+        
+        if ps aux | grep -v grep | grep nginx > /dev/null; then
+            print_success "Nginx started successfully"
+        else
+            print_warning "Failed to start nginx. Try: sudo nginx -c /opt/homebrew/etc/nginx/nginx.conf"
+        fi
+    fi
+else
+    print_success "Nginx is already running"
+fi
+
+# Check if backend setup script exists in cosmicboard-backend
+BACKEND_DIR="../cosmicboard-backend"
+if [ -f "$BACKEND_DIR/setup.sh" ] && [ "$ENV_NAME" = "development" ]; then
+    print_status "Checking backend setup..."
+    (cd $BACKEND_DIR && ./setup.sh --check 2>/dev/null) || true
 fi
 
 # Kill any existing process on the port
@@ -264,10 +316,10 @@ echo "-------------------"
 # Check nginx (only for development)
 if [ "$ENV_NAME" = "development" ]; then
     echo -n "Nginx: "
-    if nginx -t 2>/dev/null; then
+    if ps aux | grep -v grep | grep nginx > /dev/null; then
         echo -e "${GREEN}✓ Running${NC}"
     else
-        echo -e "${YELLOW}⚠ Not configured${NC}"
+        echo -e "${RED}✗ Not running${NC}"
     fi
     
     # Check backend
@@ -276,6 +328,14 @@ if [ "$ENV_NAME" = "development" ]; then
         echo -e "${GREEN}✓ Running${NC}"
     else
         echo -e "${RED}✗ Not running${NC}"
+    fi
+    
+    # Check PostgreSQL
+    echo -n "PostgreSQL: "
+    if docker ps | grep -q "cosmicboard_postgres"; then
+        echo -e "${GREEN}✓ Running in Docker${NC}"
+    else
+        echo -e "${YELLOW}⚠ Not running${NC}"
     fi
 fi
 
@@ -286,7 +346,8 @@ echo "----------------"
 case $ENV_NAME in
     development)
         echo -e "Frontend:     ${GREEN}http://localhost:${PORT}${NC}"
-        echo -e "Via Nginx:    ${GREEN}https://cosmic.board${NC}"
+        echo -e "Via Nginx:    ${GREEN}https://cosmicspace.app${NC}"
+        echo -e "Legacy URL:   ${GREEN}https://cosmic.board${NC} (redirects to cosmicspace.app)"
         echo -e "Backend API:  ${GREEN}http://localhost:${BACKEND_PORT}/api${NC}"
         echo -e "Mobile App:   ${GREEN}http://localhost:8082${NC}"
         ;;

@@ -36,6 +36,10 @@ const configs: Record<Environment, EnvironmentConfig> = {
       'http://localhost:3000',
       'https://cosmic.board',
       'http://cosmic.board',
+      'https://cosmicspace.app',
+      'https://www.cosmicspace.app',
+      'http://cosmicspace.app',
+      'http://www.cosmicspace.app',
       'http://localhost:7779'
     ],
     features: {
@@ -92,14 +96,15 @@ export const getApiEndpoint = (endpoint: string): string => {
   if (env === 'development') {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname
+      const protocol = window.location.protocol
       
-      // If accessing through cosmic.board or any custom domain in dev
-      // Use the backend directly
-      if (host === 'cosmic.board' || host !== 'localhost') {
-        return `${config.apiUrl}/api${endpoint}`
+      // If accessing through HTTPS domains (cosmic.board, cosmicspace.app)
+      // Use relative paths so nginx can proxy the requests
+      if (protocol === 'https:' || host === 'cosmic.board' || host === 'cosmicspace.app' || host === 'www.cosmicspace.app') {
+        return `/api${endpoint}`
       }
       
-      // For localhost access
+      // For localhost access, use the backend directly
       return `${config.apiUrl}/api${endpoint}`
     }
   }

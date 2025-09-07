@@ -477,8 +477,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <span className="hidden sm:inline">Tasks</span>
-                <span className="sm:hidden">📋</span>
+                <span className="hidden sm:inline">📌 Radar</span>
+                <span className="sm:hidden">📌</span>
               </button>
               <button
                 onClick={() => {
@@ -491,8 +491,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <span className="hidden sm:inline">References</span>
-                <span className="sm:hidden">📚</span>
+                <span className="hidden sm:inline">🧠 Neural Notes</span>
+                <span className="sm:hidden">🧠</span>
               </button>
               <button
                 onClick={() => {
@@ -505,8 +505,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <ImageIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Photos</span>
+                <span className="hidden sm:inline">📸 Moments</span>
+                <span className="sm:hidden">📸</span>
               </button>
               <button
                 onClick={() => {
@@ -519,8 +519,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <Camera className="w-4 h-4" />
-                <span className="hidden sm:inline">Screenshots</span>
+                <span className="hidden sm:inline">📎 Snaps</span>
+                <span className="sm:hidden">📎</span>
               </button>
               <button
                 onClick={() => {
@@ -533,8 +533,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">PDFs</span>
+                <span className="hidden sm:inline">📄 Scrolls</span>
+                <span className="sm:hidden">📄</span>
               </button>
             </div>
           </div>
@@ -543,6 +543,11 @@ export default function ProjectDetailPage() {
         {/* Tasks Tab Content */}
         {activeTab === 'tasks' && (
           <div>
+            {/* Tab Description */}
+            <div className="mb-6 text-white/60 text-sm italic border-l-2 border-purple-500/50 pl-4">
+              Your to-dos, plans, or trip checklists — basically everything you need to stay on track and not lose your mind 💯
+            </div>
+            
             {/* Task Status Tabs Container */}
             <div className="relative mb-6">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-700/30 to-gray-600/30 rounded-xl blur-sm" />
@@ -751,6 +756,10 @@ export default function ProjectDetailPage() {
         {/* References Tab Content */}
         {activeTab === 'references' && (
           <div>
+            {/* Tab Description */}
+            <div className="mb-6 text-white/60 text-sm italic border-l-2 border-purple-500/50 pl-4">
+              Prompts, code snippets, links, ideas — your digital brain dump for everything creative and chaotic 🤯
+            </div>
             {/* Add Reference Button */}
             <button
               onClick={() => setShowNewReference(true)}
@@ -967,35 +976,53 @@ export default function ProjectDetailPage() {
 
         {/* Photos Tab Content */}
         {activeTab === 'photos' && (
-          <PhotoGallery
-            photos={photos}
-            projectId={projectId}
-            onUpload={handlePhotoUpload}
-            onDelete={handleMediaDelete}
-            onRename={handleMediaRename}
-          />
+          <>
+            {/* Tab Description */}
+            <div className="mb-6 text-white/60 text-sm italic border-l-2 border-blue-500/50 pl-4">
+              Visual memories and inspo pics — the photos that tell your story and make the vibes immaculate ✨
+            </div>
+            <PhotoGallery
+              photos={photos}
+              projectId={projectId}
+              onUpload={handlePhotoUpload}
+              onDelete={handleMediaDelete}
+              onRename={handleMediaRename}
+            />
+          </>
         )}
         
         {/* Screenshots Tab Content */}
         {activeTab === 'screenshots' && (
-          <ScreenshotCapture
-            screenshots={screenshots}
-            projectId={projectId}
-            onPaste={handleScreenshotPaste}
-            onDelete={handleMediaDelete}
-            onRename={handleMediaRename}
-          />
+          <>
+            {/* Tab Description */}
+            <div className="mb-6 text-white/60 text-sm italic border-l-2 border-green-500/50 pl-4">
+              Quick snaps and receipts — proof that it happened, no cap 📸 Keep those screenshots coming!
+            </div>
+            <ScreenshotCapture
+              screenshots={screenshots}
+              projectId={projectId}
+              onPaste={handleScreenshotPaste}
+              onDelete={handleMediaDelete}
+              onRename={handleMediaRename}
+            />
+          </>
         )}
         
         {/* PDFs Tab Content */}
         {activeTab === 'pdfs' && (
-          <PDFViewer
-            pdfs={pdfs}
-            projectId={projectId}
-            onUpload={handlePDFUpload}
-            onDelete={handleMediaDelete}
-            onRename={handleMediaRename}
-          />
+          <>
+            {/* Tab Description */}
+            <div className="mb-6 text-white/60 text-sm italic border-l-2 border-red-500/50 pl-4">
+              Important docs and files — the official stuff you actually need to keep (boring but necessary) 📜
+            </div>
+            <PDFViewer
+              pdfs={pdfs}
+              projectId={projectId}
+              onUpload={handlePDFUpload}
+              onDelete={handleMediaDelete}
+              onRename={handleMediaRename}
+            />
+          </>
         )}
 
         {/* Empty state */}

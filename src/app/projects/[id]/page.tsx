@@ -8,7 +8,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer'
 import SearchableSelect from '@/components/SearchableSelect'
 import PhotoGallery from '@/components/media/PhotoGallery'
 import ScreenshotCapture from '@/components/media/ScreenshotCapture'
-import PDFViewer from '@/components/media/PDFViewer'
+import DocumentViewer from '@/components/media/DocumentViewer'
 import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText } from 'lucide-react'
 import { apiClient, getApiUrl } from '@/lib/api-client'
 import { toast } from 'sonner'
@@ -123,7 +123,7 @@ export default function ProjectDetailPage() {
   
   const photos = mediaData?.filter((m: any) => m.type === 'photo') || []
   const screenshots = mediaData?.filter((m: any) => m.type === 'screenshot') || []
-  const pdfs = mediaData?.filter((m: any) => m.type === 'pdf') || []
+  const documents = mediaData?.filter((m: any) => m.type === 'pdf') || [] // 'pdf' type now includes all documents
   
   // Debug logging
   if (activeTab === 'screenshots' && mediaData) {
@@ -266,7 +266,7 @@ export default function ProjectDetailPage() {
     }
   }
   
-  const handlePDFUpload = async (file: File) => {
+  const handleDocumentUpload = async (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('projectId', projectId)
@@ -1015,10 +1015,10 @@ export default function ProjectDetailPage() {
             <div className="mb-6 text-white/60 text-sm italic border-l-2 border-red-500/50 pl-4">
               Important docs and files — the official stuff you actually need to keep (boring but necessary) 📜
             </div>
-            <PDFViewer
-              pdfs={pdfs}
+            <DocumentViewer
+              documents={documents}
               projectId={projectId}
-              onUpload={handlePDFUpload}
+              onUpload={handleDocumentUpload}
               onDelete={handleMediaDelete}
               onRename={handleMediaRename}
             />

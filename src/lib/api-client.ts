@@ -10,11 +10,29 @@ export const getApiUrl = (endpoint: string) => {
   return getApiEndpoint(endpoint)
 }
 
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('auth_tokens')
+    if (stored) {
+      const tokens = JSON.parse(stored)
+      if (tokens.accessToken) {
+        return { 'Authorization': `Bearer ${tokens.accessToken}` }
+      }
+    }
+  }
+  return {}
+}
+
 // Helper function for API calls with better error handling
 export const apiClient = {
   get: async (endpoint: string) => {
     try {
-      const response = await fetch(getApiUrl(endpoint))
+      const response = await fetch(getApiUrl(endpoint), {
+        headers: {
+          ...getAuthHeaders()
+        }
+      })
       
       if (!response.ok) {
         const errorData = await response.text()
@@ -42,7 +60,10 @@ export const apiClient = {
     try {
       const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify(data),
       })
       
@@ -62,7 +83,10 @@ export const apiClient = {
     try {
       const response = await fetch(getApiUrl(endpoint), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify(data),
       })
       
@@ -82,6 +106,9 @@ export const apiClient = {
     try {
       const response = await fetch(getApiUrl(endpoint), {
         method: 'DELETE',
+        headers: {
+          ...getAuthHeaders()
+        }
       })
       
       if (!response.ok) {
@@ -101,6 +128,9 @@ export const apiClient = {
     try {
       const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
+        headers: {
+          ...getAuthHeaders()
+        },
         body: formData,
       })
       

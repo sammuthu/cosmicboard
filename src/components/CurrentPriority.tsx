@@ -6,6 +6,7 @@ import PrismCard from './PrismCard'
 import { formatDate, isOverdue } from '@/lib/utils'
 import { CheckCircle, Clock, Calendar } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Task {
   _id: string
@@ -23,12 +24,15 @@ export default function CurrentPriority() {
   const router = useRouter()
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
+  const { isAuthenticated } = useAuth()
 
   const fetchCurrentPriority = async () => {
     try {
       const data = await apiClient.get('/tasks/current-priority')
       setTask(data)
     } catch (error) {
+      // Silently fail if not authenticated
+      if (!isAuthenticated) return
       console.error('Failed to fetch current priority:', error)
     } finally {
       setLoading(false)
@@ -36,8 +40,12 @@ export default function CurrentPriority() {
   }
 
   useEffect(() => {
-    fetchCurrentPriority()
-  }, [])
+    if (isAuthenticated) {
+      fetchCurrentPriority()
+    } else {
+      setLoading(false)
+    }
+  }, [isAuthenticated])
 
   const handleComplete = async () => {
     if (!task) return
@@ -62,6 +70,11 @@ export default function CurrentPriority() {
     } catch (error) {
       console.error('Failed to snooze task:', error)
     }
+  }
+
+  // Don't render anything if not authenticated
+  if (!isAuthenticated) {
+    return null
   }
 
   if (loading) {

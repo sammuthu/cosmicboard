@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-09-12T13:42:19.948Z",
+  "results": [
+    {
+      "step": "Initial Navigation",
+      "success": true,
+      "message": "Correctly redirected to /auth",
+      "screenshot": "test1-initial.png"
+    },
+    {
+      "step": "Login Form",
+      "success": true,
+      "message": "Form elements found and filled",
+      "screenshot": "test2-form-filled.png"
+    },
+    {
+      "step": "Magic Link Send",
+      "success": true,
+      "message": "Email sent: Magic link sent to your email",
+      "screenshot": "test3-after-submit.png"
+    },
+    {
+      "step": "Backend API",
+      "success": true,
+      "message": "Magic link sent to your email"
+    },
+    {
+      "step": "Mock Auth",
+      "success": false,
+      "message": "Mock auth did not log in user"
+    }
+  ],
+  "summary": {
+    "total": 5,
+    "passed": 4,
+    "failed": 1
+  }
+}

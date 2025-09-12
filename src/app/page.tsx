@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Trash2, Archive, Search, Command, Download, Upload } from 'lucide-react'
+import { Plus, Trash2, Archive, Search, Command, Download, Upload, User, LogOut, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import CurrentPriority from '@/components/CurrentPriority'
 import ProjectCard from '@/components/ProjectCard'
 import PrismCard from '@/components/PrismCard'
 import SearchModal from '@/components/SearchModal'
 import { Toaster, toast } from 'sonner'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Home() {
   const [selectedTheme, setSelectedTheme] = useState<string>('sun')
@@ -17,6 +19,17 @@ export default function Home() {
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
   const [showSearch, setShowSearch] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  
+  const router = useRouter()
+  const { user, isAuthenticated, logout, loading: authLoading } = useAuth()
+  
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth')
+    }
+  }, [authLoading, isAuthenticated, router])
   
   const themes = useMemo(() => [
     { id: 'moon', icon: '🌙', name: 'Moon', bgClass: 'from-slate-900 via-blue-900 to-indigo-950' },
@@ -72,10 +85,8 @@ export default function Home() {
 
   const fetchProjects = async () => {
     try {
-      const { getApiUrl } = await import('@/lib/api-client')
-      const res = await fetch(getApiUrl('/projects'))
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
-      const data = await res.json()
+      const { apiClient } = await import('@/lib/api-client')
+      const data = await apiClient.get('/projects')
       setProjects(data)
     } catch (error) {
       console.error('Failed to fetch projects:', error)
@@ -86,8 +97,12 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetchProjects()
-  }, [])
+    if (isAuthenticated) {
+      fetchProjects()
+    } else {
+      setLoading(false)
+    }
+  }, [isAuthenticated])
 
   // Keyboard shortcut for search (Cmd+K or Ctrl+K)
   useEffect(() => {
@@ -184,6 +199,18 @@ export default function Home() {
     }
   }
 
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto"></div>
+          <p className="text-gray-400 mt-4">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen bg-gradient-to-br ${currentTheme.bgClass} transition-all duration-1000`}>
       <Toaster position="top-right" theme="dark" />
@@ -241,6 +268,46 @@ export default function Home() {
                 <Command className="w-3 h-3" />K
               </kbd>
             </button>
+            
+            {/* User Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">{user?.email?.split('@')[0] || 'User'}</span>
+              </button>
+              
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-64 bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-xl border border-purple-500/20 overflow-hidden z-50">
+                  <div className="p-4 border-b border-purple-500/20">
+                    <p className="text-white font-medium">{user?.name || user?.email?.split('@')[0]}</p>
+                    <p className="text-gray-400 text-sm">{user?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      router.push('/network');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-purple-400 hover:bg-purple-500/10 transition-colors"
+                  >
+                    <Users className="w-4 h-4" />
+                    Network
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await logout();
+                      router.push('/auth');
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setShowNewProject(true)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"

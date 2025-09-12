@@ -48,6 +48,34 @@ html {
   75% { transform: translate(-100px, 50px) scale(1.05); opacity: 0.9; }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
 @keyframes float-2 {
   0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
   33% { transform: translate(-80px, 60px) scale(1.2); opacity: 1; }

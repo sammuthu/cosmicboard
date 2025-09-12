@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Trash2, Archive, Search, Command, Download, Upload, User, LogOut, Users } from 'lucide-react'
+import { Plus, Trash2, Archive, Search, Command, Download, Upload } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import CurrentPriority from '@/components/CurrentPriority'
 import ProjectCard from '@/components/ProjectCard'
@@ -9,6 +9,8 @@ import PrismCard from '@/components/PrismCard'
 import SearchModal from '@/components/SearchModal'
 import { Toaster, toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
+import UserAvatar from '@/components/UserAvatar'
+import NetworkSidebar from '@/components/NetworkSidebar'
 
 export default function Home() {
   const [selectedTheme, setSelectedTheme] = useState<string>('sun')
@@ -19,7 +21,7 @@ export default function Home() {
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showNetworkSidebar, setShowNetworkSidebar] = useState(false)
   
   const router = useRouter()
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth()
@@ -257,7 +259,7 @@ export default function Home() {
             </h1>
             <p className="text-gray-400 text-sm mt-1">Align your actions with the cosmos</p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setShowSearch(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors group"
@@ -269,45 +271,6 @@ export default function Home() {
               </kbd>
             </button>
             
-            {/* User Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
-              >
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">{user?.email?.split('@')[0] || 'User'}</span>
-              </button>
-              
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-xl border border-purple-500/20 overflow-hidden z-50">
-                  <div className="p-4 border-b border-purple-500/20">
-                    <p className="text-white font-medium">{user?.name || user?.email?.split('@')[0]}</p>
-                    <p className="text-gray-400 text-sm">{user?.email}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      router.push('/network');
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-purple-400 hover:bg-purple-500/10 transition-colors"
-                  >
-                    <Users className="w-4 h-4" />
-                    Network
-                  </button>
-                  <button
-                    onClick={async () => {
-                      await logout();
-                      router.push('/auth');
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
             <button
               onClick={() => setShowNewProject(true)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
@@ -347,9 +310,15 @@ export default function Home() {
                 className="hidden"
               />
             </label>
+            
+            {/* User Avatar - Top Right */}
+            <UserAvatar onOpenSidebar={() => setShowNetworkSidebar(true)} />
           </div>
         </div>
       </div>
+
+      {/* Network Sidebar */}
+      <NetworkSidebar isOpen={showNetworkSidebar} onClose={() => setShowNetworkSidebar(false)} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">

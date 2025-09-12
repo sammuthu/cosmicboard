@@ -11,6 +11,7 @@ import ScreenshotCapture from '@/components/media/ScreenshotCapture'
 import DocumentViewer from '@/components/media/DocumentViewer'
 import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText } from 'lucide-react'
 import { apiClient, getApiUrl } from '@/lib/api-client'
+import { setupDevAuthTokens, checkAuthTokens } from '@/lib/dev-auth-helper'
 import { toast } from 'sonner'
 
 // Language options for code snippets
@@ -123,12 +124,19 @@ export default function ProjectDetailPage() {
   
   const photos = mediaData?.filter((m: any) => m.type === 'photo') || []
   const screenshots = mediaData?.filter((m: any) => m.type === 'screenshot') || []
-  const documents = mediaData?.filter((m: any) => m.type === 'pdf') || [] // 'pdf' type now includes all documents
+  const documents = mediaData?.filter((m: any) => m.type === 'PDF' || m.type === 'pdf') || [] // Check both cases
   
   // Debug logging
   if (activeTab === 'screenshots' && mediaData) {
     console.log('Media data:', mediaData)
     console.log('Filtered screenshots:', screenshots)
+  }
+  
+  // Debug logging for PDFs
+  if (activeTab === 'pdfs' && mediaData) {
+    console.log('Media data for PDFs:', mediaData)
+    console.log('Filtered documents:', documents)
+    console.log('Document types:', mediaData?.map((m: any) => ({ id: m.id, type: m.type, name: m.name })))
   }
 
   useEffect(() => {
@@ -141,6 +149,23 @@ export default function ProjectDetailPage() {
       })
     }
   }, [expandedRefs])
+
+  // Setup development authentication tokens if none exist
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_APP_ENV === 'development') {
+      const existingTokens = checkAuthTokens()
+      if (!existingTokens || !existingTokens.accessToken) {
+        console.log('🔧 Setting up development authentication tokens...')
+        setupDevAuthTokens()
+        // Force refresh of SWR data after token setup
+        setTimeout(() => {
+          mutate(`/api/media?projectId=${projectId}`)
+        }, 100)
+      } else {
+        console.log('✅ Authentication tokens already exist')
+      }
+    }
+  }, [projectId])
 
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return
@@ -234,16 +259,7 @@ export default function ProjectDetailPage() {
     formData.append('type', 'photo')
     
     try {
-      const response = await fetch(getApiUrl('/media/upload'), {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Upload failed' }))
-        throw new Error(error.error || 'Upload failed')
-      }
-      
+      await apiClient.upload('/media/upload', formData)
       await mutate(`/api/media?projectId=${projectId}`)
       toast.success('Photo uploaded successfully')
     } catch (error) {
@@ -273,16 +289,7 @@ export default function ProjectDetailPage() {
     formData.append('type', 'pdf')
     
     try {
-      const response = await fetch(getApiUrl('/media/upload'), {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Upload failed' }))
-        throw new Error(error.error || 'Upload failed')
-      }
-      
+      await apiClient.upload('/media/upload', formData)
       await mutate(`/api/media?projectId=${projectId}`)
       toast.success('PDF uploaded successfully')
     } catch (error) {
@@ -1034,6 +1041,26 @@ export default function ProjectDetailPage() {
             ) : (
               <p>No {taskTab} {activeTab} found</p>
             )}
+          </div>
+        )}
+
+        {/* Development Auth Debug */}
+        {process.env.NEXT_PUBLIC_APP_ENV === 'development' && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <button
+              onClick={() => {
+                setupDevAuthTokens()
+                toast.success('Development auth tokens refreshed!')
+                // Refresh all SWR data
+                mutate(`/api/tasks?projectId=${projectId}`)
+                mutate(`/api/references?projectId=${projectId}`)
+                mutate(`/api/media?projectId=${projectId}`)
+              }}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition-colors shadow-lg"
+              title="Refresh development authentication tokens"
+            >
+              🔑 Refresh Auth
+            </button>
           </div>
         )}
       </PrismCard>

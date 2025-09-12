@@ -441,7 +441,42 @@ export default function FileViewer({ url, fileName, mimeType, extension, mediaId
     case 'markdown':
       return (
         <div className="prose prose-invert max-w-none p-6 bg-gray-900 rounded-lg overflow-auto max-h-[70vh]">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            components={{
+              // Ensure all links open in new tabs to prevent navigation
+              a: ({ node, ...props }) => (
+                <a {...props} target="_blank" rel="noopener noreferrer" />
+              ),
+              // Render code blocks with syntax highlighting
+              code: ({ node, inline, className, children, ...props }) => {
+                const match = /language-(\w+)/.exec(className || '')
+                const language = match ? match[1] : ''
+                
+                if (!inline && language) {
+                  return (
+                    <SyntaxHighlighter
+                      language={getSyntaxLanguage(language)}
+                      style={atomOneDark}
+                      customStyle={{
+                        margin: 0,
+                        borderRadius: '0.375rem',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  )
+                }
+                
+                return (
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                )
+              }
+            }}
+          >
             {content}
           </ReactMarkdown>
         </div>

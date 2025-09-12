@@ -174,3 +174,4 @@ RESTful endpoints under `/api/` with action-based nested routes:
 - SWR caching for API responses
 - Turbopack for fast development builds
 - TypeScript strict mode enabled with path alias `@/*` mapping to `./src/*`
+- Add to memory. "Always use Playwright framework for automated end to end testing and you should be taking screenshots automatically without manual intervention to verify the feature is working, and alway use the nmuthu@gmail.com  user for testing and the test should automatically populate and get the magic link for authentication"

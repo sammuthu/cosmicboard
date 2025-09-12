@@ -9,6 +9,10 @@ import {
 import PrismCardMedia from '@/components/PrismCardMedia'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import dynamic from 'next/dynamic'
+
+// Dynamically import FileViewer to avoid SSR issues with PDF viewer
+const FileViewer = dynamic(() => import('./FileViewer'), { ssr: false })
 
 interface DocumentFile {
   id: string
@@ -141,7 +145,6 @@ export default function DocumentViewer({
   }
 
   const openViewer = (doc: DocumentFile) => {
-    if (!doc.metadata?.isViewable) return
     setSelectedDoc(doc)
     setCurrentPage(1)
     setZoom(100)
@@ -194,34 +197,43 @@ export default function DocumentViewer({
     }
   }
 
-  // Render text file content
-  const renderTextContent = (doc: DocumentFile) => {
-    const [content, setContent] = useState<string>('')
-    const [loading, setLoading] = useState(true)
-    
-    // Fetch text content
-    useEffect(() => {
-      fetch(doc.url)
-        .then(res => res.text())
-        .then(text => {
-          setContent(text)
-          setLoading(false)
-        })
-        .catch(err => {
-          console.error('Failed to load file:', err)
-          setLoading(false)
-        })
-    }, [doc.url])
-    
-    if (loading) {
-      return <div className="text-white/60 text-center p-8">Loading...</div>
+  // Check if file is viewable
+  const isFileViewable = (doc: DocumentFile): boolean => {
+    // Get extension from metadata or extract from filename
+    let extension = doc.metadata?.extension?.toLowerCase() || ''
+    if (!extension && doc.name) {
+      const lastDot = doc.name.lastIndexOf('.')
+      if (lastDot > -1) {
+        extension = doc.name.slice(lastDot + 1).toLowerCase()
+      }
     }
+    const mimeType = doc.mimeType?.toLowerCase() || ''
     
-    return (
-      <pre className="w-full h-full p-4 text-white bg-gray-900 rounded-lg overflow-auto font-mono text-sm">
-        {content}
-      </pre>
-    )
+    // List of viewable extensions
+    const viewableExtensions = [
+      // Documents
+      'pdf', 'txt', 'md', 'markdown',
+      // Code
+      'js', 'jsx', 'ts', 'tsx', 'py', 'java', 'c', 'cpp', 'cs', 'php', 'rb', 
+      'go', 'rs', 'swift', 'kt', 'sql', 'sh', 'bash', 'json', 'xml', 'html',
+      'css', 'scss', 'sass', 'less', 'yml', 'yaml', 'toml', 'ini', 'conf',
+      // Data
+      'csv',
+      // Images
+      'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
+      // Video
+      'mp4', 'webm', 'ogg', 'mov',
+      // Audio  
+      'mp3', 'wav', 'ogg', 'flac', 'aac',
+      // Office (with external viewer)
+      'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'
+    ]
+    
+    return viewableExtensions.includes(extension) ||
+           mimeType.startsWith('image/') ||
+           mimeType.startsWith('video/') ||
+           mimeType.startsWith('audio/') ||
+           mimeType.startsWith('text/')
   }
 
   return (
@@ -316,12 +328,12 @@ export default function DocumentViewer({
                           />
                         ) : (
                           <button
-                            onClick={() => doc.metadata?.isViewable && openViewer(doc)}
+                            onClick={() => isFileViewable(doc) && openViewer(doc)}
                             className={cn(
                               "text-white font-medium truncate text-left",
-                              doc.metadata?.isViewable ? "hover:text-blue-400 cursor-pointer" : "cursor-default opacity-70"
+                              isFileViewable(doc) ? "hover:text-blue-400 cursor-pointer" : "cursor-default opacity-70"
                             )}
-                            disabled={!doc.metadata?.isViewable}
+                            disabled={!isFileViewable(doc)}
                           >
                             {doc.name}
                           </button>
@@ -339,7 +351,7 @@ export default function DocumentViewer({
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {doc.metadata?.isViewable ? (
+                        {isFileViewable(doc) ? (
                           <button
                             onClick={() => openViewer(doc)}
                             className="p-1.5 bg-white/10 hover:bg-white/20 rounded transition-colors"
@@ -490,30 +502,13 @@ export default function DocumentViewer({
           {/* Document Content */}
           <div className="flex-1 overflow-auto p-4">
             <div className="max-w-6xl mx-auto">
-              {/* PDF Viewer */}
-              {selectedDoc.mimeType === 'application/pdf' && (
-                <iframe
-                  src={`${selectedDoc.url}#page=${currentPage}&zoom=${zoom}`}
-                  className="w-full h-full min-h-[800px] rounded-lg bg-white"
-                  style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
-                />
-              )}
-              
-              {/* Image Viewer */}
-              {selectedDoc.mimeType.startsWith('image/') && (
-                <img
-                  src={selectedDoc.url}
-                  alt={selectedDoc.name}
-                  className="max-w-full h-auto rounded-lg"
-                  style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'center' }}
-                />
-              )}
-              
-              {/* Text/Code Viewer */}
-              {['text/plain', 'text/csv', 'text/markdown', 'application/json', 'application/xml', 'text/html', 'text/css', 'application/javascript'].includes(selectedDoc.mimeType) ||
-               ['txt', 'csv', 'md', 'json', 'xml', 'html', 'css', 'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'c', 'cpp', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'sql', 'sh', 'yml', 'yaml', 'toml', 'ini', 'cfg', 'conf', 'log'].includes(selectedDoc.metadata?.extension || '') && (
-                renderTextContent(selectedDoc)
-              )}
+              <FileViewer
+                url={selectedDoc.url}
+                fileName={selectedDoc.name}
+                mimeType={selectedDoc.mimeType}
+                extension={selectedDoc.metadata?.extension}
+                mediaId={selectedDoc.id}
+              />
             </div>
           </div>
         </div>

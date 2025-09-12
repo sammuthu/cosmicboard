@@ -107,18 +107,17 @@ export default function ProjectDetailPage() {
   )
   
   const { data: tasks, error: tasksError } = useSWR(
-    projectId && activeTab === 'tasks' ? `/api/tasks?projectId=${projectId}` : null,
+    projectId ? `/api/tasks?projectId=${projectId}` : null,
     fetcher
   )
   
   const { data: references, error: refsError } = useSWR(
-    projectId && activeTab === 'references' ? `/api/references?projectId=${projectId}` : null,
+    projectId ? `/api/references?projectId=${projectId}` : null,
     fetcher
   )
   
   const { data: mediaData } = useSWR(
-    projectId && (activeTab === 'photos' || activeTab === 'screenshots' || activeTab === 'pdfs') 
-      ? `/api/media?projectId=${projectId}` : null,
+    projectId ? `/api/media?projectId=${projectId}` : null,
     fetcher
   )
   
@@ -484,8 +483,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <span className="hidden sm:inline">📌 Radar</span>
-                <span className="sm:hidden">📌</span>
+                <span className="hidden sm:inline">📌 Radar {tasks && `(${tasks.length})`}</span>
+                <span className="sm:hidden">📌 {tasks && `(${tasks.length})`}</span>
               </button>
               <button
                 onClick={() => {
@@ -498,8 +497,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <span className="hidden sm:inline">🧠 Neural Notes</span>
-                <span className="sm:hidden">🧠</span>
+                <span className="hidden sm:inline">🧠 Neural Notes {references && `(${references.length})`}</span>
+                <span className="sm:hidden">🧠 {references && `(${references.length})`}</span>
               </button>
               <button
                 onClick={() => {
@@ -512,8 +511,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <span className="hidden sm:inline">📸 Moments</span>
-                <span className="sm:hidden">📸</span>
+                <span className="hidden sm:inline">📸 Moments {photos.length > 0 && `(${photos.length})`}</span>
+                <span className="sm:hidden">📸 {photos.length > 0 && `(${photos.length})`}</span>
               </button>
               <button
                 onClick={() => {
@@ -526,8 +525,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <span className="hidden sm:inline">📎 Snaps</span>
-                <span className="sm:hidden">📎</span>
+                <span className="hidden sm:inline">📎 Snaps {screenshots.length > 0 && `(${screenshots.length})`}</span>
+                <span className="sm:hidden">📎 {screenshots.length > 0 && `(${screenshots.length})`}</span>
               </button>
               <button
                 onClick={() => {
@@ -540,8 +539,8 @@ export default function ProjectDetailPage() {
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                 }`}
               >
-                <span className="hidden sm:inline">📄 Scrolls</span>
-                <span className="sm:hidden">📄</span>
+                <span className="hidden sm:inline">📄 Scrolls {documents.length > 0 && `(${documents.length})`}</span>
+                <span className="sm:hidden">📄 {documents.length > 0 && `(${documents.length})`}</span>
               </button>
             </div>
           </div>

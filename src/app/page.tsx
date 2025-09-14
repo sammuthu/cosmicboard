@@ -36,6 +36,7 @@ export default function Home() {
   const themes = useMemo(() => [
     { id: 'moon', icon: '🌙', name: 'Moon', bgClass: 'from-slate-900 via-blue-900 to-indigo-950' },
     { id: 'sun', icon: '☀️', name: 'Sun', bgClass: 'from-orange-900 via-amber-900 to-yellow-900' },
+    { id: 'daylight', icon: '🌞', name: 'Daylight', bgClass: 'from-amber-50 via-orange-50 to-yellow-50' },
     { id: 'comet', icon: '☄️', name: 'Comet', bgClass: 'from-purple-900 via-violet-900 to-indigo-900' },
     { id: 'earth', icon: '🌍', name: 'Earth', bgClass: 'from-blue-900 via-teal-900 to-green-900' },
     { id: 'rocket', icon: '🚀', name: 'Rocket', bgClass: 'from-gray-900 via-slate-800 to-zinc-900' },
@@ -219,7 +220,7 @@ export default function Home() {
       <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} />
       
       {/* Theme Selector with User Avatar */}
-      <div className="pt-8 pb-4 px-4">
+      <div className="pt-8 pb-4 px-4 relative z-50">
         <div className="max-w-4xl mx-auto">
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-3xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur"></div>
@@ -259,7 +260,7 @@ export default function Home() {
       </div>
 
       {/* Title and Description */}
-      <div className="text-center py-6">
+      <div className="text-center py-6 relative z-10">
         <h1 className="text-6xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-pulse-subtle">
           Cosmic Space
         </h1>
@@ -269,7 +270,7 @@ export default function Home() {
       </div>
 
       {/* Feature Buttons Container */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 relative z-10">
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-cyan-500/50 rounded-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur"></div>
           <div className="relative bg-gradient-to-br from-gray-900/90 via-gray-800/90 to-gray-900/90 rounded-2xl shadow-2xl backdrop-blur-sm overflow-hidden">
@@ -343,7 +344,7 @@ export default function Home() {
       <NetworkSidebar isOpen={showNetworkSidebar} onClose={() => setShowNetworkSidebar(false)} />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 relative z-10">
         {/* Current Priority */}
         <CurrentPriority />
 

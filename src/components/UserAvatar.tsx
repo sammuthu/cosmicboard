@@ -54,7 +54,7 @@ export default function UserAvatar({ onOpenSidebar }: UserAvatarProps) {
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative z-[200]" ref={dropdownRef}>
       {/* Avatar Button */}
       <button
         onClick={() => setShowDropdown(!showDropdown)}
@@ -75,7 +75,7 @@ export default function UserAvatar({ onOpenSidebar }: UserAvatarProps) {
 
       {/* Dropdown Menu */}
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-72 bg-gray-900/95 backdrop-blur-md rounded-xl shadow-2xl border border-purple-500/20 overflow-hidden z-50 animate-fadeIn">
+        <div className="absolute right-0 mt-2 w-72 bg-gray-900/95 backdrop-blur-md rounded-xl shadow-2xl border border-purple-500/20 overflow-hidden z-[9999] animate-fadeIn">
           {/* User Info Header */}
           <div className="p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-purple-500/20">
             <div className="flex items-center gap-3">

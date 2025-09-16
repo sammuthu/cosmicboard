@@ -1,0 +1,96 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9] [cursor=pointer]
+  - generic [ref=e13]:
+    - button "Back to Home" [ref=e15]:
+      - img [ref=e16]
+      - generic [ref=e18]: Back to Home
+    - generic [ref=e19]:
+      - heading "Theme Gallery" [level=1] [ref=e20]
+      - paragraph [ref=e21]: Choose from our collection of cosmic themes or customize your own
+    - generic [ref=e22]:
+      - generic [ref=e35]:
+        - heading "Comet" [level=3] [ref=e36]
+        - paragraph [ref=e37]: Deep purple and violet cosmic theme
+        - generic [ref=e44]:
+          - button "Apply" [ref=e45]:
+            - img [ref=e46]
+            - generic [ref=e52]: Apply
+          - button "Customize" [ref=e53]:
+            - img [ref=e54]
+            - generic [ref=e56]: Customize
+      - generic [ref=e69]:
+        - heading "Daylight" [level=3] [ref=e70]
+        - paragraph [ref=e71]: Bright and light theme with warm tones
+        - generic [ref=e78]:
+          - button "Apply" [ref=e79]:
+            - img [ref=e80]
+            - generic [ref=e86]: Apply
+          - button "Customize" [ref=e87]:
+            - img [ref=e88]
+            - generic [ref=e90]: Customize
+      - generic [ref=e103]:
+        - heading "Earth" [level=3] [ref=e104]
+        - paragraph [ref=e105]: Natural blue and green tones
+        - generic [ref=e112]:
+          - button "Apply" [ref=e113]:
+            - img [ref=e114]
+            - generic [ref=e120]: Apply
+          - button "Customize" [ref=e121]:
+            - img [ref=e122]
+            - generic [ref=e124]: Customize
+      - generic [ref=e137]:
+        - heading "Moon" [level=3] [ref=e138]
+        - paragraph [ref=e139]: Dark blue theme with cool tones
+        - generic [ref=e146]:
+          - button "Apply" [ref=e147]:
+            - img [ref=e148]
+            - generic [ref=e154]: Apply
+          - button "Customize" [ref=e155]:
+            - img [ref=e156]
+            - generic [ref=e158]: Customize
+      - generic [ref=e171]:
+        - heading "Rocket" [level=3] [ref=e172]
+        - paragraph [ref=e173]: Sleek gray and metallic theme
+        - generic [ref=e180]:
+          - button "Apply" [ref=e181]:
+            - img [ref=e182]
+            - generic [ref=e188]: Apply
+          - button "Customize" [ref=e189]:
+            - img [ref=e190]
+            - generic [ref=e192]: Customize
+      - generic [ref=e205]:
+        - heading "Saturn" [level=3] [ref=e206]
+        - paragraph [ref=e207]: Purple to pink gradient theme
+        - generic [ref=e214]:
+          - button "Apply" [ref=e215]:
+            - img [ref=e216]
+            - generic [ref=e222]: Apply
+          - button "Customize" [ref=e223]:
+            - img [ref=e224]
+            - generic [ref=e226]: Customize
+      - generic [ref=e239]:
+        - heading "Sparkle" [level=3] [ref=e240]
+        - paragraph [ref=e241]: Pink and rose magical theme
+        - generic [ref=e248]:
+          - button "Apply" [ref=e249]:
+            - img [ref=e250]
+            - generic [ref=e256]: Apply
+          - button "Customize" [ref=e257]:
+            - img [ref=e258]
+            - generic [ref=e260]: Customize
+      - generic [ref=e273]:
+        - heading "Sun" [level=3] [ref=e274]
+        - paragraph [ref=e275]: Warm orange and amber tones
+        - generic [ref=e282]:
+          - button "Apply" [ref=e283]:
+            - img [ref=e284]
+            - generic [ref=e290]: Apply
+          - button "Customize" [ref=e291]:
+            - img [ref=e292]
+            - generic [ref=e294]: Customize
+```

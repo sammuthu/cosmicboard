@@ -6,9 +6,12 @@ import { ArrowLeft, Save, RotateCcw, Palette, Type, Square, AlertCircle } from '
 import PrismCard from '@/components/PrismCard'
 import {
   getThemeTemplate,
+  getUserThemeCustomizations,
   saveThemeCustomization,
+  deleteThemeCustomization,
   type ThemeTemplate,
-  type ThemeColors
+  type ThemeColors,
+  type UserThemeCustomization
 } from '@/lib/api/themes'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -20,8 +23,11 @@ export default function ThemeCustomizePage() {
 
   const [template, setTemplate] = useState<ThemeTemplate | null>(null)
   const [customColors, setCustomColors] = useState<ThemeColors | null>(null)
+  const [existingCustomization, setExistingCustomization] = useState<UserThemeCustomization | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [isReset, setIsReset] = useState(false)
   const [activeSection, setActiveSection] = useState<string>('background')
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null)
 
@@ -36,9 +42,32 @@ export default function ThemeCustomizePage() {
   const loadThemeTemplate = async () => {
     try {
       setLoading(true)
-      const data = await getThemeTemplate(themeId)
-      setTemplate(data)
-      setCustomColors(JSON.parse(JSON.stringify(data.colors))) // Deep clone
+
+      // Load the base template
+      const templateData = await getThemeTemplate(themeId)
+      setTemplate(templateData)
+
+      // Check for existing user customizations
+      try {
+        const customizations = await getUserThemeCustomizations()
+        const existingCustom = customizations.find(c => c.themeId === themeId)
+
+        if (existingCustom && existingCustom.customColors) {
+          setExistingCustomization(existingCustom)
+          // Merge template colors with custom colors
+          const mergedColors = {
+            ...templateData.colors,
+            ...existingCustom.customColors
+          } as ThemeColors
+          setCustomColors(JSON.parse(JSON.stringify(mergedColors)))
+        } else {
+          // No customization exists, use template colors
+          setCustomColors(JSON.parse(JSON.stringify(templateData.colors)))
+        }
+      } catch (error) {
+        console.log('No existing customizations, using template defaults')
+        setCustomColors(JSON.parse(JSON.stringify(templateData.colors)))
+      }
     } catch (error) {
       console.error('Error loading theme template:', error)
     } finally {
@@ -66,18 +95,54 @@ export default function ThemeCustomizePage() {
 
     try {
       setSaving(true)
-      await saveThemeCustomization(themeId, customColors)
+      const result = await saveThemeCustomization(themeId, customColors)
+      console.log('Theme customization saved:', result)
+
+      // Update the existing customization reference
+      if (result && result.id) {
+        setExistingCustomization(result)
+      }
+
+      // Navigate back to themes gallery
       router.push('/themes')
     } catch (error) {
       console.error('Error saving theme customization:', error)
+      alert('Failed to save theme customization. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (template) {
-      setCustomColors(JSON.parse(JSON.stringify(template.colors)))
+      try {
+        setResetting(true)
+
+        // Reset to original template colors
+        setCustomColors(JSON.parse(JSON.stringify(template.colors)))
+
+        // If there's an existing customization, delete it from database
+        if (existingCustomization) {
+          await deleteThemeCustomization(existingCustomization.id)
+          setExistingCustomization(null)
+          setIsReset(true)  // Disable Save button after successful reset
+          console.log('Theme customization deleted, reset to defaults')
+
+          // Navigate back to themes gallery after successful reset
+          setTimeout(() => {
+            router.push('/themes')
+          }, 500)
+        } else {
+          // If no existing customization, mark as reset and navigate back
+          setIsReset(true)
+          router.push('/themes')
+        }
+      } catch (error) {
+        console.error('Error resetting theme:', error)
+        // Silently handle error, just log it
+      } finally {
+        setResetting(false)
+      }
     }
   }
 
@@ -113,15 +178,25 @@ export default function ThemeCustomizePage() {
           <div className="flex gap-3">
             <button
               onClick={handleReset}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              disabled={resetting}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
             >
-              <RotateCcw className="w-4 h-4" />
-              Reset
+              {resetting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Resetting...</span>
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reset</span>
+                </>
+              )}
             </button>
             <button
               onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50"
+              disabled={saving || isReset}
+              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <>

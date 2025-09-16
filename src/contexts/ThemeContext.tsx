@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { getUserActiveTheme, type UserTheme, type ThemeColors } from '@/lib/api/themes'
+import { getUserActiveTheme, getThemeTemplates, type UserTheme, type ThemeColors } from '@/lib/api/themes'
 import { useAuth } from './AuthContext'
 
 interface ThemeContextValue {
@@ -27,21 +27,50 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true)
       if (user) {
+        console.log('Loading theme for user:', user.email)
         const theme = await getUserActiveTheme()
+        console.log('Received active theme:', theme)
         setActiveTheme(theme)
-        applyThemeToDOM(theme.colors)
+        if (theme && theme.colors) {
+          applyThemeToDOM(theme.colors)
+        } else {
+          console.error('Theme or theme colors are missing:', theme)
+        }
       } else {
         // Load default theme for non-authenticated users
-        setActiveTheme(null)
+        const defaultTheme = await getThemeTemplates()
+        const moonTheme = defaultTheme.find(t => t.id === 'moon') || defaultTheme[0]
+        if (moonTheme) {
+          setActiveTheme({
+            themeId: moonTheme.id,
+            name: moonTheme.name,
+            displayName: moonTheme.displayName,
+            colors: moonTheme.colors,
+            isCustomized: false
+          })
+          applyThemeToDOM(moonTheme.colors)
+        }
       }
     } catch (error) {
       console.error('Error loading user theme:', error)
+      // Apply a fallback theme on error
+      try {
+        const templates = await getThemeTemplates()
+        if (templates && templates.length > 0) {
+          applyThemeToDOM(templates[0].colors)
+        }
+      } catch (fallbackError) {
+        console.error('Failed to load fallback theme:', fallbackError)
+      }
     } finally {
       setLoading(false)
     }
   }
 
   const applyThemeToDOM = (colors: ThemeColors) => {
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return
+
     const root = document.documentElement
 
     // Apply CSS variables for the theme colors
@@ -80,6 +109,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const gradient = `linear-gradient(135deg, ${colors.parentBackground.from}, ${colors.parentBackground.via}, ${colors.parentBackground.to})`
     document.body.style.background = gradient
     document.body.style.minHeight = '100vh'
+
+    console.log('Theme applied:', colors)
   }
 
   useEffect(() => {

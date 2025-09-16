@@ -205,7 +205,7 @@ export default function Home() {
   // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto"></div>
           <p className="text-gray-400 mt-4">Loading...</p>
@@ -215,7 +215,7 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${currentTheme.bgClass} transition-all duration-1000`}>
+    <div className="min-h-screen transition-all duration-1000">
       <Toaster position="top-right" theme="dark" />
       <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} />
       
@@ -224,7 +224,12 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-3xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur"></div>
-            <div className="relative bg-gradient-to-br from-gray-900/90 via-gray-800/90 to-gray-900/90 rounded-3xl p-6 shadow-2xl backdrop-blur-sm">
+            <div className="relative rounded-3xl p-6 shadow-2xl backdrop-blur-sm" style={{
+              background: `linear-gradient(135deg, var(--theme-card-bg-from), var(--theme-card-bg-via), var(--theme-card-bg-to))`,
+              borderColor: 'var(--theme-card-border)',
+              borderWidth: '1px',
+              borderStyle: 'solid'
+            }}>
               <div className="flex justify-between items-center">
                 {/* Theme Icons */}
                 <div className="flex-1 flex justify-center items-center gap-6">
@@ -273,7 +278,12 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 relative z-10">
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-cyan-500/50 rounded-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur"></div>
-          <div className="relative bg-gradient-to-br from-gray-900/90 via-gray-800/90 to-gray-900/90 rounded-2xl shadow-2xl backdrop-blur-sm overflow-hidden">
+          <div className="relative rounded-2xl shadow-2xl backdrop-blur-sm overflow-hidden" style={{
+            background: `linear-gradient(135deg, var(--theme-card-bg-from), var(--theme-card-bg-via), var(--theme-card-bg-to))`,
+            borderColor: 'var(--theme-card-border)',
+            borderWidth: '1px',
+            borderStyle: 'solid'
+          }}>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
               {/* Search */}
               <button

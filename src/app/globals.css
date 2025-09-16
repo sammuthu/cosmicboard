@@ -2,8 +2,41 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Default fallback colors */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+
+  /* Theme colors - will be set by ThemeContext */
+  --theme-bg-from: #0f0f23;
+  --theme-bg-via: #1a1a3e;
+  --theme-bg-to: #2d1b69;
+
+  --theme-card-bg-from: rgba(31, 41, 55, 0.8);
+  --theme-card-bg-via: rgba(55, 65, 81, 0.8);
+  --theme-card-bg-to: rgba(31, 41, 55, 0.8);
+
+  --theme-card-glow-from: rgba(168, 85, 247, 0.4);
+  --theme-card-glow-via: rgba(236, 72, 153, 0.4);
+  --theme-card-glow-to: transparent;
+  --theme-card-border: rgba(168, 85, 247, 0.3);
+
+  --theme-text-primary: #E0E7FF;
+  --theme-text-secondary: #A5B4FC;
+  --theme-text-accent: #C084FC;
+  --theme-text-muted: #6B7280;
+
+  --theme-btn-primary-bg: #8B5CF6;
+  --theme-btn-primary-hover: #7C3AED;
+  --theme-btn-primary-text: #FFFFFF;
+
+  --theme-btn-secondary-bg: #4B5563;
+  --theme-btn-secondary-hover: #6B7280;
+  --theme-btn-secondary-text: #E5E7EB;
+
+  --theme-status-success: #10B981;
+  --theme-status-warning: #F59E0B;
+  --theme-status-error: #EF4444;
+  --theme-status-info: #3B82F6;
 }
 
 @theme inline {
@@ -13,17 +46,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  /* Use dynamic theme background */
+  background: linear-gradient(135deg, var(--theme-bg-from), var(--theme-bg-via), var(--theme-bg-to));
+  color: var(--theme-text-primary);
   font-family: var(--font-sans), system-ui, sans-serif;
+  min-height: 100vh;
 }
 
 /* Smooth scrolling */

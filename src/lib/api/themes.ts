@@ -80,85 +80,44 @@ export interface UserThemeCustomization {
 
 // Get all available theme templates
 export async function getThemeTemplates(): Promise<ThemeTemplate[]> {
-  const response = await apiClient('/themes/templates')
-  if (!response.ok) {
-    throw new Error('Failed to fetch theme templates')
-  }
-  const data = await response.json()
+  const data = await apiClient.get('/themes/templates')
   return data.data
 }
 
 // Get a specific theme template
 export async function getThemeTemplate(id: string): Promise<ThemeTemplate> {
-  const response = await apiClient(`/themes/templates/${id}`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch theme template')
-  }
-  const data = await response.json()
+  const data = await apiClient.get(`/themes/templates/${id}`)
   return data.data
 }
 
 // Get user's active theme
 export async function getUserActiveTheme(): Promise<UserTheme> {
-  const response = await apiClient('/themes/user/active')
-  if (!response.ok) {
-    throw new Error('Failed to fetch user theme')
-  }
-  const data = await response.json()
+  const data = await apiClient.get('/themes/user/active')
   return data.data
 }
 
 // Get all user's theme customizations
 export async function getUserThemeCustomizations(): Promise<UserThemeCustomization[]> {
-  const response = await apiClient('/themes/user/customizations')
-  if (!response.ok) {
-    throw new Error('Failed to fetch user customizations')
-  }
-  const data = await response.json()
+  const data = await apiClient.get('/themes/user/customizations')
   return data.data
 }
 
 // Create or update user theme customization
 export async function saveThemeCustomization(themeId: string, customColors: ThemeColors): Promise<any> {
-  const response = await apiClient('/themes/user/customize', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      themeId,
-      customColors,
-    }),
+  const data = await apiClient.post('/themes/user/customize', {
+    themeId,
+    customColors,
   })
-  if (!response.ok) {
-    throw new Error('Failed to save theme customization')
-  }
-  const data = await response.json()
   return data.data
 }
 
 // Set active theme without customization
 export async function setActiveTheme(themeId: string): Promise<any> {
-  const response = await apiClient('/themes/user/set-active', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ themeId }),
-  })
-  if (!response.ok) {
-    throw new Error('Failed to set active theme')
-  }
-  const data = await response.json()
+  const data = await apiClient.post('/themes/user/set-active', { themeId })
   return data.data
 }
 
 // Delete user theme customization
 export async function deleteThemeCustomization(id: string): Promise<void> {
-  const response = await apiClient(`/themes/user/customizations/${id}`, {
-    method: 'DELETE',
-  })
-  if (!response.ok) {
-    throw new Error('Failed to delete customization')
-  }
+  await apiClient.delete(`/themes/user/customizations/${id}`)
 }

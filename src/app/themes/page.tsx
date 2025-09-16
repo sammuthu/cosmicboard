@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Palette, Check, Edit2, Sparkles } from 'lucide-react'
+import { Palette, Check, Edit2, ArrowLeft } from 'lucide-react'
 import PrismCard from '@/components/PrismCard'
 import { getThemeTemplates, getUserActiveTheme, getUserThemeCustomizations, setActiveTheme, deleteThemeCustomization, type ThemeTemplate, type UserTheme, type UserThemeCustomization } from '@/lib/api/themes'
 import { useAuth } from '@/contexts/AuthContext'
@@ -93,6 +93,19 @@ export default function ThemesGalleryPage() {
   return (
     <div className="min-h-screen p-8 pt-24">
       <div className="container mx-auto max-w-7xl">
+        {/* Navigation */}
+        <div className="mb-8">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 group transition-all hover:scale-105"
+          >
+            <ArrowLeft className="w-5 h-5 text-purple-400 group-hover:text-purple-300 transition-colors" />
+            <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-pink-300 transition-all">
+              Back to Home
+            </span>
+          </button>
+        </div>
+
         {/* Header */}
         <div className="mb-12 text-center">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
@@ -110,10 +123,31 @@ export default function ThemesGalleryPage() {
             const userCustomization = userCustomizations.find(c => c.themeId === theme.id)
             const isActive = activeTheme?.themeId === theme.id
             const hasCustomization = !!userCustomization
-            const colors = theme.colors
+
+            // Deep merge function for nested color objects
+            const deepMerge = (target: any, source: any): any => {
+              const output = { ...target }
+              for (const key in source) {
+                if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                  if (target[key] && typeof target[key] === 'object' && !Array.isArray(target[key])) {
+                    output[key] = deepMerge(target[key], source[key])
+                  } else {
+                    output[key] = source[key]
+                  }
+                } else {
+                  output[key] = source[key]
+                }
+              }
+              return output
+            }
+
+            // Merge theme colors with user customization if it exists
+            const colors = hasCustomization && userCustomization.customColors
+              ? deepMerge(theme.colors, userCustomization.customColors)
+              : theme.colors
 
             return (
-              <PrismCard key={theme.id} className="relative group">
+              <PrismCard key={theme.id} className="relative group" data-testid="theme-card">
                 {/* Badges */}
                 <div className="absolute -top-2 -right-2 z-10 flex gap-2">
                   {isActive && (
@@ -264,29 +298,6 @@ export default function ThemesGalleryPage() {
             </p>
           </div>
         )}
-
-        {/* Create New Theme Section */}
-        <div className="mt-12">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">Create New Theme</h2>
-            <p className="text-gray-400">Start from a template and make it your own</p>
-          </div>
-          <div className="flex justify-center">
-            <button
-              onClick={() => {
-                if (!user) {
-                  router.push('/auth')
-                } else {
-                  router.push('/themes/new')
-                }
-              }}
-              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2"
-            >
-              <Sparkles className="w-5 h-5" />
-              Create Custom Theme
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )

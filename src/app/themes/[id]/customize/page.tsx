@@ -487,21 +487,32 @@ function ColorInput({
   value: string
   onChange: (value: string) => void
 }) {
+  // Extract hex color from rgba or use as is if already hex
+  const getHexValue = (color: string): string => {
+    if (color.startsWith('#')) {
+      return color
+    }
+    // For rgba, we can't convert to hex easily in input, so default to black
+    return '#000000'
+  }
+
   return (
     <div className="flex items-center justify-between">
       <label className="text-sm text-gray-300">{label}</label>
       <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={value.startsWith('#') ? value : '#000000'}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-10 h-10 rounded cursor-pointer"
-        />
+        {value.startsWith('#') && (
+          <input
+            type="color"
+            value={getHexValue(value)}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-10 h-10 rounded cursor-pointer"
+          />
+        )}
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="px-3 py-1 bg-gray-800 text-white rounded-lg text-sm font-mono w-32"
+          className="px-3 py-1 bg-gray-800 text-white rounded-lg text-sm font-mono w-40"
           placeholder="#000000 or rgba()"
         />
       </div>

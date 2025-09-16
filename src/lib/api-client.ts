@@ -25,7 +25,22 @@ const getAuthHeaders = () => {
 }
 
 // Helper function for API calls with better error handling
-export const apiClient = {
+// Simple fetch wrapper for backwards compatibility
+export const apiClient = async (endpoint: string, options?: RequestInit) => {
+  const url = getApiUrl(endpoint)
+  const headers = {
+    ...getAuthHeaders(),
+    ...options?.headers
+  }
+
+  return fetch(url, {
+    ...options,
+    headers
+  })
+}
+
+// Structured API client with methods
+export const api = {
   get: async (endpoint: string) => {
     try {
       const response = await fetch(getApiUrl(endpoint), {

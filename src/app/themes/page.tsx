@@ -4,32 +4,52 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Palette, Check, Edit2, Sparkles } from 'lucide-react'
 import PrismCard from '@/components/PrismCard'
-import { getThemeTemplates, getUserActiveTheme, setActiveTheme, type ThemeTemplate, type UserTheme } from '@/lib/api/themes'
+import { getThemeTemplates, getUserActiveTheme, getUserThemeCustomizations, setActiveTheme, deleteThemeCustomization, type ThemeTemplate, type UserTheme, type UserThemeCustomization } from '@/lib/api/themes'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function ThemesGalleryPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [themes, setThemes] = useState<ThemeTemplate[]>([])
+  const [userCustomizations, setUserCustomizations] = useState<UserThemeCustomization[]>([])
   const [activeTheme, setActiveThemeState] = useState<UserTheme | null>(null)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState<string | null>(null)
 
   useEffect(() => {
     loadThemes()
-  }, [])
+  }, [user])
 
   const loadThemes = async () => {
     try {
       setLoading(true)
-      const [templatesData, activeData] = await Promise.all([
-        getThemeTemplates(),
-        user ? getUserActiveTheme() : Promise.resolve(null)
-      ])
+
+      // Always load theme templates (they're public)
+      const templatesData = await getThemeTemplates()
       setThemes(templatesData)
-      setActiveThemeState(activeData)
+
+      // Only load user's themes if authenticated
+      if (user) {
+        try {
+          const [activeData, customizationsData] = await Promise.all([
+            getUserActiveTheme(),
+            getUserThemeCustomizations()
+          ])
+          setActiveThemeState(activeData)
+          setUserCustomizations(customizationsData || [])
+        } catch (error) {
+          console.error('Error loading user themes:', error)
+          setActiveThemeState(null)
+          setUserCustomizations([])
+        }
+      } else {
+        setActiveThemeState(null)
+        setUserCustomizations([])
+      }
     } catch (error) {
       console.error('Error loading themes:', error)
+      // Still try to show something even if there's an error
+      setThemes([])
     } finally {
       setLoading(false)
     }
@@ -86,20 +106,28 @@ export default function ThemesGalleryPage() {
         {/* Themes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {themes.map((theme) => {
+            // Check if user has customization for this theme
+            const userCustomization = userCustomizations.find(c => c.themeId === theme.id)
             const isActive = activeTheme?.themeId === theme.id
+            const hasCustomization = !!userCustomization
             const colors = theme.colors
 
             return (
               <PrismCard key={theme.id} className="relative group">
-                {/* Active Badge */}
-                {isActive && (
-                  <div className="absolute -top-2 -right-2 z-10">
+                {/* Badges */}
+                <div className="absolute -top-2 -right-2 z-10 flex gap-2">
+                  {isActive && (
                     <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
                       <Check className="w-3 h-3" />
                       Active
                     </div>
-                  </div>
-                )}
+                  )}
+                  {hasCustomization && !isActive && (
+                    <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                      Customized
+                    </div>
+                  )}
+                </div>
 
                 {/* Theme Preview */}
                 <div
@@ -145,6 +173,9 @@ export default function ThemesGalleryPage() {
                 <div className="p-4">
                   <h3 className="text-xl font-bold text-white mb-1">
                     {theme.displayName}
+                    {hasCustomization && (
+                      <span className="text-xs text-blue-400 font-normal ml-2">(Customized)</span>
+                    )}
                   </h3>
                   <p className="text-gray-400 text-sm mb-4">
                     {theme.description}
@@ -212,8 +243,10 @@ export default function ThemesGalleryPage() {
                     <button
                       onClick={() => handleCustomizeTheme(theme.id)}
                       className="px-3 py-2 rounded-lg font-medium bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all flex items-center gap-2"
+                      title="Customize this theme"
                     >
                       <Edit2 className="w-4 h-4" />
+                      <span className="text-sm">Customize</span>
                     </button>
                   </div>
                 </div>
@@ -222,24 +255,38 @@ export default function ThemesGalleryPage() {
           })}
         </div>
 
-        {/* Custom Themes Section */}
-        {user && (
-          <div className="mt-12">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-white mb-2">Your Customizations</h2>
-              <p className="text-gray-400">Create your own unique theme variations</p>
-            </div>
-            <div className="flex justify-center">
-              <button
-                onClick={() => router.push('/themes/new')}
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2"
-              >
-                <Sparkles className="w-5 h-5" />
-                Create Custom Theme
-              </button>
-            </div>
+        {/* Show customizations summary if user has any */}
+        {user && userCustomizations.length > 0 && (
+          <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <p className="text-blue-400 text-sm">
+              You have {userCustomizations.length} customized theme{userCustomizations.length > 1 ? 's' : ''}.
+              Customized themes are marked with a blue badge.
+            </p>
           </div>
         )}
+
+        {/* Create New Theme Section */}
+        <div className="mt-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">Create New Theme</h2>
+            <p className="text-gray-400">Start from a template and make it your own</p>
+          </div>
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                if (!user) {
+                  router.push('/auth')
+                } else {
+                  router.push('/themes/new')
+                }
+              }}
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2"
+            >
+              <Sparkles className="w-5 h-5" />
+              Create Custom Theme
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

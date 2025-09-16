@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { User, LogOut, Settings, Bell, Users, MessageSquare, Share2, UserPlus } from 'lucide-react'
+import { User, LogOut, Settings, Bell, Users, MessageSquare, Share2, UserPlus, Palette } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -159,6 +159,17 @@ export default function UserAvatar({ onOpenSidebar }: UserAvatarProps) {
             >
               <Bell className="w-5 h-5" />
               <span className="flex-1 text-left">Notifications</span>
+            </button>
+
+            <button
+              onClick={() => {
+                router.push('/themes')
+                setShowDropdown(false)
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
+            >
+              <Palette className="w-5 h-5" />
+              <span className="flex-1 text-left">Customize Themes</span>
             </button>
 
             <button

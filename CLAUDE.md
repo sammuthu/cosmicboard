@@ -14,7 +14,7 @@ CosmicBoard consists of THREE separate repositories:
 ## Tech Stack
 
 - **Framework**: Next.js 15.3.4 with App Router, React 19, and Turbopack
-- **Databases**: Dual support - MongoDB (Mongoose) and PostgreSQL (Prisma) - currently migrating from MongoDB to PostgreSQL
+- **Backend API**: All data operations handled via external backend service
 - **Styling**: Tailwind CSS v4 with custom cosmic theme system and animations
 - **State Management**: Zustand, SWR for data fetching
 - **UI Components**: Custom PrismCard glassmorphic design system, Radix UI, Lucide React icons
@@ -35,15 +35,21 @@ npm run start
 
 # Run linting
 npm run lint
+```
 
-# Seed database with initial data
-npm run seed
+### Testing Commands
+```bash
+# Run E2E tests with Playwright
+npx playwright test
 
-# Prisma commands (for PostgreSQL)
-npx prisma generate     # Generate Prisma client
-npx prisma migrate dev   # Run migrations
-npx prisma studio        # Open database GUI
-npx prisma db push      # Sync schema without migration
+# Run specific test file
+npx playwright test e2e/user-profile-network.spec.ts
+
+# Run with UI mode for debugging
+npx playwright test --ui
+
+# Run with headed browser
+npx playwright test --headed
 ```
 
 ### Backend API (cosmicboard-backend)
@@ -58,26 +64,13 @@ cd /Users/sammuthu/Projects/cosmicboard-mobile
 npm start    # Runs Expo on port 8082
 ```
 
-## Database Setup
+## Testing Guidelines
 
-### PostgreSQL (Primary - via Docker)
-```bash
-# Start PostgreSQL container
-docker run -d --name cosmicboard_postgres \
-  -e POSTGRES_DB=cosmicboard \
-  -e POSTGRES_USER=cosmicuser \
-  -e POSTGRES_PASSWORD=cosmic123! \
-  -p 5432:5432 postgres:16-alpine
-
-# Connection string in .env
-DATABASE_URL=postgresql://cosmicuser:cosmic123!@localhost:5432/cosmicboard
-```
-
-### MongoDB (Legacy - being phased out)
-```bash
-# Connection string in .env
-MONGODB_URI=mongodb://localhost:27017/cosmicboard
-```
+- **Framework**: Playwright for E2E testing with automated screenshot verification
+- **Test User**: Always use `nmuthu@gmail.com` for authentication tests
+- **Authentication**: Tests automatically handle magic link flows
+- **Screenshots**: Automatically captured during test runs - no manual intervention needed
+- **Test Location**: All E2E tests in `/e2e/` directory
 
 ## External Backend Configuration
 
@@ -91,27 +84,25 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:7779
 
 ## Architecture Overview
 
-### Database Migration Status
-- MongoDB models in `/src/models/` (Project, Task, Reference) - legacy
-- Prisma schema in `/prisma/schema.prisma` for PostgreSQL - current
-- Media features exclusively use Prisma/PostgreSQL
-- Check individual API route implementations to determine which database is used
+### API Communication
+- All data operations go through the external backend API
+- Frontend uses centralized API client in `/src/lib/api-client.ts`
+- No direct database connections from frontend
 
 ### Key Directories
 - `/src/app/` - Next.js App Router pages and API routes
 - `/src/components/` - Reusable components using PrismCard design system
 - `/src/components/media/` - Media management components
-- `/src/models/` - Mongoose models (MongoDB - legacy)
-- `/prisma/` - Prisma schema and migrations (PostgreSQL - current)
-- `/src/lib/` - Database connections, utilities, API client
+- `/src/lib/` - API client and utilities
 - `/src/config/` - Environment configuration
 - `/src/hooks/` - Custom React hooks
 - `/src/types/` - TypeScript type definitions
 - `/src/styles/` - Global styles and cosmic theme animations
 - `/public/uploads/` - Local storage for uploaded media files
+- `/e2e/` - Playwright E2E test files
 
-### API Routes Pattern
-RESTful endpoints under `/api/` with action-based nested routes:
+### Backend API Endpoints
+The external backend provides RESTful endpoints:
 - `/api/projects` - Project CRUD operations
 - `/api/tasks` - Task management
 - `/api/tasks/[id]/complete` - Complete a task
@@ -128,21 +119,21 @@ RESTful endpoints under `/api/` with action-based nested routes:
 
 1. **PrismCard Component Pattern**: All UI elements wrapped in glassmorphic PrismCard for consistent cosmic styling
 2. **Soft Delete Pattern**: Tasks use status-based soft delete (ACTIVE/COMPLETED/DELETED)
-3. **API Client Abstraction**: Centralized client in `/src/lib/api-client.ts` handles internal/external backend switching
-4. **JSONB Metadata**: PostgreSQL JSONB fields for flexible schema extension
+3. **API Client Abstraction**: Centralized client in `/src/lib/api-client.ts` handles all backend communication
 5. **Client-Side Rendering**: Interactive components use 'use client' directive
 
 ### Theme System
-- 5+ cosmic themes (sun, moon, universe, cosmic, galaxy, neptune)
+- 8+ cosmic themes (sun, moon, daylight, universe, cosmic, galaxy, neptune, comet)
 - Dynamic CSS animations (floating, drifting, pulsing, particle effects)
 - Theme persistence via localStorage
 - Custom animations in `/src/styles/globals.css`
 
 ## Advanced Features
 
-1. **Keyboard Shortcuts**: 
+1. **Keyboard Shortcuts**:
    - `Cmd/Ctrl+K` - Global search
    - `Cmd/Ctrl+V` - Paste screenshots directly
+   - `Cmd/Ctrl+N` - New project
    - Theme switching shortcuts
 
 2. **Media Management**:
@@ -156,22 +147,16 @@ RESTful endpoints under `/api/` with action-based nested routes:
 
 5. **Markdown Rendering**: Rich text with syntax highlighting for 100+ languages
 
-## Database Schema
+## Data Models (managed by backend)
 
-### PostgreSQL (Prisma) - Current
-- **Project**: id, name, description, metadata (JSONB), timestamps
-- **Task**: id, projectId, priority, status, content, metadata (JSONB), timestamps  
-- **Reference**: id, projectId, title, url, description, metadata (JSONB), timestamps
-- **Media**: id, projectId, type (photo/screenshot/pdf), name, url, thumbnailUrl, size, mimeType, metadata (JSONB), timestamps
-
-### MongoDB (Mongoose) - Legacy
-- Similar structure but using MongoDB ObjectIds and embedded documents
+- **Project**: id, name, description, metadata, timestamps
+- **Task**: id, projectId, priority, status, content, metadata, timestamps
+- **Reference**: id, projectId, title, url, description, category, tags, metadata, timestamps
+- **Media**: id, projectId, type (photo/screenshot/pdf), name, url, thumbnailUrl, size, mimeType, metadata, timestamps
 
 ## Important Notes
 
-- **WARNING**: Never run `prisma migrate reset` or any destructive migration commands without explicit permission
-- Database indexes exist on foreign keys and commonly queried fields
-- SWR caching for API responses
-- Turbopack for fast development builds
+- SWR caching for API responses with automatic revalidation
+- Turbopack for fast development builds (significantly faster than webpack)
 - TypeScript strict mode enabled with path alias `@/*` mapping to `./src/*`
-- Add to memory. "Always use Playwright framework for automated end to end testing and you should be taking screenshots automatically without manual intervention to verify the feature is working, and alway use the nmuthu@gmail.com  user for testing and the test should automatically populate and get the magic link for authentication"
+- Environment-aware API routing with automatic backend selection

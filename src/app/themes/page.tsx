@@ -147,7 +147,12 @@ export default function ThemesGalleryPage() {
               : theme.colors
 
             return (
-              <PrismCard key={theme.id} className="relative group" data-testid="theme-card">
+              <PrismCard
+                key={theme.id}
+                className="relative group cursor-pointer transition-transform hover:scale-[1.02]"
+                data-testid="theme-card"
+                onClick={() => handleCustomizeTheme(theme.id)}
+              >
                 {/* Badges */}
                 <div className="absolute -top-2 -right-2 z-10 flex gap-2">
                   {isActive && (
@@ -247,7 +252,10 @@ export default function ThemesGalleryPage() {
                   {/* Actions */}
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleApplyTheme(theme.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleApplyTheme(theme.id)
+                      }}
                       disabled={isActive || applying === theme.id}
                       className={`
                         flex-1 px-3 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2
@@ -275,7 +283,10 @@ export default function ThemesGalleryPage() {
                       )}
                     </button>
                     <button
-                      onClick={() => handleCustomizeTheme(theme.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCustomizeTheme(theme.id)
+                      }}
                       className="px-3 py-2 rounded-lg font-medium bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all flex items-center gap-2"
                       title="Customize this theme"
                     >

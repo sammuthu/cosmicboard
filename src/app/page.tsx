@@ -9,8 +9,10 @@ import PrismCard from '@/components/PrismCard'
 import SearchModal from '@/components/SearchModal'
 import { Toaster, toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import UserAvatar from '@/components/UserAvatar'
 import NetworkSidebar from '@/components/NetworkSidebar'
+import { setActiveTheme } from '@/lib/api/themes'
 
 export default function Home() {
   const [selectedTheme, setSelectedTheme] = useState<string>('sun')
@@ -22,9 +24,11 @@ export default function Home() {
   const [newProjectDescription, setNewProjectDescription] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [showNetworkSidebar, setShowNetworkSidebar] = useState(false)
-  
+  const [applyingTheme, setApplyingTheme] = useState(false)
+
   const router = useRouter()
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth()
+  const { activeTheme, refreshTheme } = useTheme()
   
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -44,20 +48,20 @@ export default function Home() {
     { id: 'sparkle', icon: '✨', name: 'Sparkle', bgClass: 'from-pink-900 via-rose-900 to-purple-900' }
   ], [])
 
-  // Load theme from localStorage on mount
+  // Load active theme from backend on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('cosmicboard-theme')
-    const hasSeenAnimation = localStorage.getItem('cosmicboard-animation-seen')
-    
-    if (savedTheme && themes.find(t => t.id === savedTheme)) {
-      setSelectedTheme(savedTheme)
+    if (activeTheme?.themeId) {
+      setSelectedTheme(activeTheme.themeId)
       setIsAutoPlaying(false)
-    } else if (!hasSeenAnimation) {
-      // First time visitor - show animation
-      setIsAutoPlaying(true)
-      localStorage.setItem('cosmicboard-animation-seen', 'true')
+    } else {
+      const hasSeenAnimation = localStorage.getItem('cosmicboard-animation-seen')
+      if (!hasSeenAnimation) {
+        // First time visitor - show animation
+        setIsAutoPlaying(true)
+        localStorage.setItem('cosmicboard-animation-seen', 'true')
+      }
     }
-  }, [themes])
+  }, [activeTheme])
 
   // Auto-play themes on mount
   useEffect(() => {
@@ -78,10 +82,34 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [isAutoPlaying, themes])
 
-  const handleThemeSelect = (themeId: string) => {
-    setIsAutoPlaying(false)
-    setSelectedTheme(themeId)
-    localStorage.setItem('cosmicboard-theme', themeId)
+  const handleThemeSelect = async (themeId: string) => {
+    if (!user) {
+      // For non-authenticated users, just update local state
+      setIsAutoPlaying(false)
+      setSelectedTheme(themeId)
+      localStorage.setItem('cosmicboard-theme', themeId)
+      return
+    }
+
+    try {
+      setIsAutoPlaying(false)
+      setApplyingTheme(true)
+      setSelectedTheme(themeId)
+
+      // Apply theme through backend
+      await setActiveTheme(themeId)
+
+      // Refresh theme context to apply the new theme
+      await refreshTheme()
+
+      // Save to localStorage as fallback
+      localStorage.setItem('cosmicboard-theme', themeId)
+    } catch (error) {
+      console.error('Failed to apply theme:', error)
+      toast.error('Failed to apply theme')
+    } finally {
+      setApplyingTheme(false)
+    }
   }
 
   const currentTheme = themes.find(t => t.id === selectedTheme) || themes[1]
@@ -174,31 +202,22 @@ export default function Home() {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
-      const { getApiUrl } = await import('@/lib/api-client')
-      const res = await fetch(getApiUrl('/projects'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newProjectName,
-          description: newProjectDescription
-        })
+      const { apiClient } = await import('@/lib/api-client')
+      const result = await apiClient.post('/projects', {
+        name: newProjectName,
+        description: newProjectDescription
       })
-      
-      if (res.ok) {
-        toast.success('Project created successfully!')
-        setNewProjectName('')
-        setNewProjectDescription('')
-        setShowNewProject(false)
-        fetchProjects()
-      } else {
-        const error = await res.json()
-        toast.error(error.error || 'Failed to create project')
-      }
-    } catch (error) {
+
+      toast.success('Project created successfully!')
+      setNewProjectName('')
+      setNewProjectDescription('')
+      setShowNewProject(false)
+      fetchProjects()
+    } catch (error: any) {
       console.error('Failed to create project:', error)
-      toast.error('Failed to create project')
+      toast.error(error.message || 'Failed to create project')
     }
   }
 
@@ -237,14 +256,15 @@ export default function Home() {
                     <button
                       key={theme.id}
                       onClick={() => handleThemeSelect(theme.id)}
+                      disabled={applyingTheme}
                       className={`relative group transition-all duration-300 ${
                         selectedTheme === theme.id ? 'scale-125' : 'scale-100 hover:scale-110'
-                      }`}
+                      } ${applyingTheme ? 'opacity-50' : ''}`}
                       aria-label={`Select ${theme.name} theme`}
                     >
                       <span className={`text-4xl block transition-all duration-300 ${
                         selectedTheme === theme.id ? 'drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]' : ''
-                      }`}>
+                      } ${applyingTheme && selectedTheme === theme.id ? 'animate-pulse' : ''}`}>
                         {theme.icon}
                       </span>
                       {selectedTheme === theme.id && (

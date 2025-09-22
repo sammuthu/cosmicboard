@@ -562,27 +562,67 @@ function ColorInput({
   value: string
   onChange: (value: string) => void
 }) {
-  // Extract hex color from rgba or use as is if already hex
-  const getHexValue = (color: string): string => {
-    if (color.startsWith('#')) {
-      return color
+  // Convert rgba to hex for color picker
+  const rgbaToHex = (rgba: string): string => {
+    if (rgba.startsWith('#')) {
+      return rgba
     }
-    // For rgba, we can't convert to hex easily in input, so default to black
-    return '#000000'
+
+    // Parse rgba string
+    const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+      const r = parseInt(match[1]);
+      const g = parseInt(match[2]);
+      const b = parseInt(match[3]);
+
+      const toHex = (n: number) => {
+        const hex = n.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      };
+
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    return '#000000';
   }
+
+  // Convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number = 1): string => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    if (alpha === 1) {
+      return `rgba(${r}, ${g}, ${b}, 1)`;
+    }
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  // Handle color picker change
+  const handleColorChange = (hexColor: string) => {
+    // If original value was rgba, convert back to rgba
+    if (value.startsWith('rgba')) {
+      // Extract alpha value from original
+      const alphaMatch = value.match(/rgba?\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/);
+      const alpha = alphaMatch ? parseFloat(alphaMatch[1]) : 1;
+      onChange(hexToRgba(hexColor, alpha));
+    } else {
+      onChange(hexColor);
+    }
+  }
+
+  const hexValue = rgbaToHex(value);
 
   return (
     <div className="flex items-center justify-between">
       <label className="text-sm text-gray-300">{label}</label>
       <div className="flex items-center gap-2">
-        {value.startsWith('#') && (
-          <input
-            type="color"
-            value={getHexValue(value)}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-10 h-10 rounded cursor-pointer"
-          />
-        )}
+        <input
+          type="color"
+          value={hexValue}
+          onChange={(e) => handleColorChange(e.target.value)}
+          className="w-10 h-10 rounded cursor-pointer border border-gray-600"
+        />
         <input
           type="text"
           value={value}

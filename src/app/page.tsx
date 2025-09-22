@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import UserAvatar from '@/components/UserAvatar'
 import NetworkSidebar from '@/components/NetworkSidebar'
-import { setActiveTheme } from '@/lib/api/themes'
+import { setActiveTheme, getThemeTemplates } from '@/lib/api/themes'
 
 export default function Home() {
   const [selectedTheme, setSelectedTheme] = useState<string>('sun')
@@ -25,6 +25,8 @@ export default function Home() {
   const [showSearch, setShowSearch] = useState(false)
   const [showNetworkSidebar, setShowNetworkSidebar] = useState(false)
   const [applyingTheme, setApplyingTheme] = useState(false)
+  const [backendThemes, setBackendThemes] = useState<any[]>([])
+  const [themesLoading, setThemesLoading] = useState(true)
 
   const router = useRouter()
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth()
@@ -37,23 +39,79 @@ export default function Home() {
     }
   }, [authLoading, isAuthenticated, router])
   
-  const themes = useMemo(() => [
-    { id: 'moon', icon: '🌙', name: 'Moon', bgClass: 'from-slate-900 via-blue-900 to-indigo-950' },
-    { id: 'sun', icon: '☀️', name: 'Sun', bgClass: 'from-orange-900 via-amber-900 to-yellow-900' },
-    { id: 'daylight', icon: '🌞', name: 'Daylight', bgClass: 'from-amber-50 via-orange-50 to-yellow-50' },
-    { id: 'comet', icon: '☄️', name: 'Comet', bgClass: 'from-purple-900 via-violet-900 to-indigo-900' },
-    { id: 'earth', icon: '🌍', name: 'Earth', bgClass: 'from-blue-900 via-teal-900 to-green-900' },
-    { id: 'rocket', icon: '🚀', name: 'Rocket', bgClass: 'from-gray-900 via-slate-800 to-zinc-900' },
-    { id: 'saturn', icon: '🪐', name: 'Saturn', bgClass: 'from-purple-900 via-fuchsia-900 to-pink-900' },
-    { id: 'sparkle', icon: '✨', name: 'Sparkle', bgClass: 'from-pink-900 via-rose-900 to-purple-900' }
-  ], [])
+  const themes = useMemo(() => {
+    // Map backend themes to display themes with icons
+    const themeIcons: Record<string, string> = {
+      'moon': '🌙',
+      'sun': '☀️',
+      'daylight': '🌞',
+      'comet': '☄️',
+      'earth': '🌍',
+      'rocket': '🚀',
+      'saturn': '🪐',
+      'sparkle': '✨'
+    }
+
+    const themeBgClasses: Record<string, string> = {
+      'moon': 'from-slate-900 via-blue-900 to-indigo-950',
+      'sun': 'from-orange-900 via-amber-900 to-yellow-900',
+      'daylight': 'from-amber-50 via-orange-50 to-yellow-50',
+      'comet': 'from-purple-900 via-violet-900 to-indigo-900',
+      'earth': 'from-blue-900 via-teal-900 to-green-900',
+      'rocket': 'from-gray-900 via-slate-800 to-zinc-900',
+      'saturn': 'from-purple-900 via-fuchsia-900 to-pink-900',
+      'sparkle': 'from-pink-900 via-rose-900 to-purple-900'
+    }
+
+    // Map backend themes to the format we need for display
+    return backendThemes.map(theme => ({
+      id: theme.id,
+      icon: themeIcons[theme.name.toLowerCase()] || '🎨',
+      name: theme.displayName || theme.name,
+      bgClass: themeBgClasses[theme.name.toLowerCase()] || 'from-gray-900 via-gray-800 to-gray-700'
+    }))
+  }, [backendThemes])
+
+  // Load themes from backend on mount
+  useEffect(() => {
+    const loadThemes = async () => {
+      setThemesLoading(true)
+      try {
+        const templates = await getThemeTemplates()
+        setBackendThemes(templates)
+      } catch (error) {
+        console.error('Failed to load themes:', error)
+        // Use fallback themes if backend fails
+        setBackendThemes([
+          { id: 'moon', name: 'Moon', displayName: 'Moon' },
+          { id: 'sun', name: 'Sun', displayName: 'Sun' },
+          { id: 'daylight', name: 'Daylight', displayName: 'Daylight' },
+          { id: 'comet', name: 'Comet', displayName: 'Comet' },
+          { id: 'earth', name: 'Earth', displayName: 'Earth' },
+          { id: 'rocket', name: 'Rocket', displayName: 'Rocket' },
+          { id: 'saturn', name: 'Saturn', displayName: 'Saturn' },
+          { id: 'sparkle', name: 'Sparkle', displayName: 'Sparkle' }
+        ])
+      } finally {
+        setThemesLoading(false)
+      }
+    }
+
+    loadThemes()
+  }, [])
 
   // Load active theme from backend on mount
   useEffect(() => {
     if (activeTheme?.themeId) {
       setSelectedTheme(activeTheme.themeId)
       setIsAutoPlaying(false)
-    } else {
+    } else if (backendThemes.length > 0) {
+      // Set default theme if no active theme
+      const defaultTheme = backendThemes.find(t => t.name.toLowerCase() === 'sun') || backendThemes[0]
+      if (defaultTheme) {
+        setSelectedTheme(defaultTheme.id)
+      }
+
       const hasSeenAnimation = localStorage.getItem('cosmicboard-animation-seen')
       if (!hasSeenAnimation) {
         // First time visitor - show animation
@@ -61,19 +119,23 @@ export default function Home() {
         localStorage.setItem('cosmicboard-animation-seen', 'true')
       }
     }
-  }, [activeTheme])
+  }, [activeTheme, backendThemes])
 
   // Auto-play themes on mount
   useEffect(() => {
-    if (!isAutoPlaying) return
-    
+    if (!isAutoPlaying || themes.length === 0) return
+
     let currentIndex = 0
     const interval = setInterval(() => {
       if (currentIndex < themes.length) {
         setSelectedTheme(themes[currentIndex].id)
         currentIndex++
       } else {
-        setSelectedTheme('sun')
+        // Set to sun theme or first available theme
+        const defaultTheme = themes.find(t => t.name.toLowerCase() === 'sun') || themes[0]
+        if (defaultTheme) {
+          setSelectedTheme(defaultTheme.id)
+        }
         setIsAutoPlaying(false)
         clearInterval(interval)
       }
@@ -252,7 +314,12 @@ export default function Home() {
               <div className="flex justify-between items-center">
                 {/* Theme Icons */}
                 <div className="flex-1 flex justify-center items-center gap-6">
-                  {themes.map((theme) => (
+                  {themesLoading ? (
+                    <div className="text-white/60">Loading themes...</div>
+                  ) : themes.length === 0 ? (
+                    <div className="text-white/60">No themes available</div>
+                  ) : (
+                    themes.map((theme) => (
                     <button
                       key={theme.id}
                       onClick={() => handleThemeSelect(theme.id)}
@@ -271,7 +338,8 @@ export default function Home() {
                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
                       )}
                     </button>
-                  ))}
+                  ))
+                  )}
                 </div>
                 
                 {/* User Avatar */}

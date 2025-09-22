@@ -46,6 +46,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     setLoading(true);
     try {
+      // In development mode, always use the seeded auth (matching mobile approach)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 Development mode: setting up auth for nmuthu@gmail.com...');
+        const devAuthResult = await authService.setupDevelopmentAuth();
+        if (devAuthResult.success && devAuthResult.user) {
+          console.log('✅ Development authentication configured');
+          setUser(devAuthResult.user);
+          setIsAuthenticated(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Production mode: check normal authentication
       if (authService.isAuthenticated()) {
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
@@ -56,10 +70,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAuthenticated(false);
         }
       } else {
-        // Try to get stored user for display even if not authenticated
+        // Try to get stored user and refresh
         const storedUser = authService.getStoredUser();
         if (storedUser) {
-          // Try to refresh authentication
           const currentUser = await authService.getCurrentUser();
           if (currentUser) {
             setUser(currentUser);

@@ -30,7 +30,7 @@ npm run dev
 # Build production bundle
 npm run build
 
-# Start production server
+# Start production server on port 7777
 npm run start
 
 # Run linting
@@ -50,6 +50,9 @@ npx playwright test --ui
 
 # Run with headed browser
 npx playwright test --headed
+
+# Generate test report
+npx playwright show-report
 ```
 
 ### Backend API (cosmicboard-backend)
@@ -82,12 +85,24 @@ NEXT_PUBLIC_USE_EXTERNAL_BACKEND=true
 NEXT_PUBLIC_BACKEND_URL=http://localhost:7779
 ```
 
+## Development Authentication (LocalStack)
+
+When running with LocalStack in development mode, authentication is handled automatically:
+
+- **Default User**: `nmuthu@gmail.com` is pre-seeded in the database
+- **Auth Token**: `acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d` (seeded in DB)
+- **Auto-Login**: Web frontend automatically authenticates using the seeded token - no manual login required
+- **Mobile Sync**: Uses the exact same token and flow as the mobile app
+
+This matches the mobile app behavior - when LocalStack is detected, the frontend uses the pre-seeded development user without requiring manual authentication.
+
 ## Architecture Overview
 
 ### API Communication
 - All data operations go through the external backend API
 - Frontend uses centralized API client in `/src/lib/api-client.ts`
 - No direct database connections from frontend
+- Authentication handled by `/src/services/auth.service.ts` with magic link flow
 
 ### Key Directories
 - `/src/app/` - Next.js App Router pages and API routes
@@ -120,7 +135,8 @@ The external backend provides RESTful endpoints:
 1. **PrismCard Component Pattern**: All UI elements wrapped in glassmorphic PrismCard for consistent cosmic styling
 2. **Soft Delete Pattern**: Tasks use status-based soft delete (ACTIVE/COMPLETED/DELETED)
 3. **API Client Abstraction**: Centralized client in `/src/lib/api-client.ts` handles all backend communication
-5. **Client-Side Rendering**: Interactive components use 'use client' directive
+4. **Client-Side Rendering**: Interactive components use 'use client' directive
+5. **Error Handling**: Consistent error handling with toast notifications via `sonner`
 
 ### Theme System
 - 8+ cosmic themes (sun, moon, daylight, universe, cosmic, galaxy, neptune, comet)
@@ -160,3 +176,5 @@ The external backend provides RESTful endpoints:
 - Turbopack for fast development builds (significantly faster than webpack)
 - TypeScript strict mode enabled with path alias `@/*` mapping to `./src/*`
 - Environment-aware API routing with automatic backend selection
+- Development authentication helper in `/src/lib/dev-auth-helper.ts` for testing
+- Media files stored locally in `/public/uploads/` with automatic thumbnail generation

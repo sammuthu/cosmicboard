@@ -26,18 +26,83 @@ class AuthService {
     // Load tokens from localStorage on init (only in browser)
     if (typeof window !== 'undefined') {
       this.loadTokens();
+      // In development, ensure tokens are always available
+      if (process.env.NODE_ENV === 'development' && !this.accessToken) {
+        this.setupDevelopmentAuthSync();
+      }
     }
+  }
+
+  private setupDevelopmentAuthSync() {
+    // Use the same seeded token as mobile (this token is seeded in the database)
+    const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
+    this.accessToken = devToken;
+    this.refreshToken = devToken;
+    this.tokenExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+    // Save to localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('auth_tokens', JSON.stringify({
+        accessToken: this.accessToken,
+        refreshToken: this.refreshToken,
+        expiry: this.tokenExpiry.toISOString()
+      }));
+
+      // Set user if not exists
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        const mockUser = {
+          id: 'dev-user-nmuthu',
+          email: 'nmuthu@gmail.com',
+          name: 'Development User',
+        };
+        localStorage.setItem('user', JSON.stringify(mockUser));
+      }
+    }
+
+    // Set axios default header
+    axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
   }
 
   private loadTokens() {
     if (typeof window !== 'undefined' && window.localStorage) {
+      // In development, use the seeded token (matching mobile approach)
+      if (process.env.NODE_ENV === 'development') {
+        const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
+        this.accessToken = devToken;
+        this.refreshToken = devToken;
+        this.tokenExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
+
+        // Save tokens to localStorage for persistence
+        localStorage.setItem('auth_tokens', JSON.stringify({
+          accessToken: this.accessToken,
+          refreshToken: this.refreshToken,
+          expiry: this.tokenExpiry.toISOString()
+        }));
+
+        // Store mock user if not exists
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
+          const mockUser = {
+            id: 'dev-user-nmuthu',
+            email: 'nmuthu@gmail.com',
+            name: 'Development User',
+          };
+          localStorage.setItem('user', JSON.stringify(mockUser));
+        }
+
+        // Set axios default header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+        return;
+      }
+
       const stored = localStorage.getItem('auth_tokens');
       if (stored) {
         const tokens = JSON.parse(stored);
         this.accessToken = tokens.accessToken;
         this.refreshToken = tokens.refreshToken;
         this.tokenExpiry = new Date(tokens.expiry);
-        
+
         // Set axios default header
         if (this.accessToken) {
           axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
@@ -197,6 +262,44 @@ class AuthService {
     }
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
+  }
+
+  async setupDevelopmentAuth(email: string = 'nmuthu@gmail.com'): Promise<{ success: boolean; user?: User; message?: string }> {
+    // In development, use the seeded token from database (matching mobile approach)
+    console.log('🔧 Setting up development auth for nmuthu@gmail.com...');
+
+    // Use the same token that's seeded in the database
+    const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
+    const devUser = {
+      id: 'dev-user-nmuthu',
+      email: 'nmuthu@gmail.com',
+      name: 'Development User',
+    };
+
+    this.accessToken = devToken;
+    this.refreshToken = devToken;
+    this.tokenExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
+
+    // Save to localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('auth_tokens', JSON.stringify({
+        accessToken: this.accessToken,
+        refreshToken: this.refreshToken,
+        expiry: this.tokenExpiry.toISOString()
+      }));
+      localStorage.setItem('user', JSON.stringify(devUser));
+    }
+
+    // Set axios default header
+    axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+
+    console.log('✅ Development auth configured successfully');
+    console.log('👤 User:', devUser.email);
+
+    return {
+      success: true,
+      user: devUser,
+    };
   }
 }
 

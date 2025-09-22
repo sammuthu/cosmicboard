@@ -3,22 +3,31 @@
  * This helps set up authentication tokens for development mode
  */
 
-export const setupDevAuthTokens = () => {
+export const setupDevAuthTokens = async () => {
   if (typeof window === 'undefined') return;
-  
-  // Valid refresh token from the database
-  const devToken = 'acf42bf1db7047b8f6fced9eb611ea285faeef09e98efe1818f51edb687d2005';
-  
-  // Store the token in localStorage in the format the frontend expects
+
+  console.log('🔧 Setting up development authentication for nmuthu@gmail.com...');
+
+  // Use the same token that's seeded in the database (matching mobile approach)
+  const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
+  const devUser = {
+    id: 'dev-user-nmuthu',
+    email: 'nmuthu@gmail.com',
+    name: 'Development User',
+  };
+
   const authTokens = {
     accessToken: devToken,
     refreshToken: devToken,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+    expiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year
   };
-  
+
   localStorage.setItem('auth_tokens', JSON.stringify(authTokens));
-  console.log('🔑 Development auth tokens set up');
-  
+  localStorage.setItem('user', JSON.stringify(devUser));
+
+  console.log('✅ Development auth configured successfully');
+  console.log('👤 User:', devUser.email);
+
   return authTokens;
 };
 

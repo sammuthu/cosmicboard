@@ -15,6 +15,8 @@ export default function ThemesGalleryPage() {
   const [activeTheme, setActiveThemeState] = useState<UserTheme | null>(null)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState<string | null>(null)
+  const [showDeviceDialog, setShowDeviceDialog] = useState(false)
+  const [selectedThemeForApplication, setSelectedThemeForApplication] = useState<string | null>(null)
 
   useEffect(() => {
     loadThemes()
@@ -55,22 +57,33 @@ export default function ThemesGalleryPage() {
     }
   }
 
-  const handleApplyTheme = async (themeId: string) => {
+  const handleApplyTheme = (themeId: string) => {
     if (!user) {
       router.push('/auth')
       return
     }
+    setSelectedThemeForApplication(themeId)
+    setShowDeviceDialog(true)
+  }
+
+  const applyThemeWithScope = async (isGlobal: boolean) => {
+    if (!selectedThemeForApplication) return
 
     try {
-      setApplying(themeId)
-      await setActiveTheme(themeId)
+      setApplying(selectedThemeForApplication)
+      setShowDeviceDialog(false)
+
+      // For web, we always use 'desktop' as the device type
+      await setActiveTheme(selectedThemeForApplication, isGlobal, 'desktop')
       await loadThemes()
+
       // Apply theme to current page
       window.location.reload()
     } catch (error) {
       console.error('Error applying theme:', error)
     } finally {
       setApplying(null)
+      setSelectedThemeForApplication(null)
     }
   }
 
@@ -307,6 +320,46 @@ export default function ThemesGalleryPage() {
               You have {userCustomizations.length} customized theme{userCustomizations.length > 1 ? 's' : ''}.
               Customized themes are marked with a blue badge.
             </p>
+          </div>
+        )}
+
+        {/* Device Selection Dialog */}
+        {showDeviceDialog && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <PrismCard className="max-w-md w-full">
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Apply Theme</h3>
+                <p className="text-gray-300 mb-6">
+                  Where would you like to apply this theme?
+                </p>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={() => applyThemeWithScope(false)}
+                    className="w-full px-4 py-3 rounded-lg font-medium bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all"
+                  >
+                    This device only
+                  </button>
+
+                  <button
+                    onClick={() => applyThemeWithScope(true)}
+                    className="w-full px-4 py-3 rounded-lg font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-all"
+                  >
+                    All devices
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowDeviceDialog(false)
+                      setSelectedThemeForApplication(null)
+                    }}
+                    className="w-full px-4 py-3 rounded-lg font-medium bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </PrismCard>
           </div>
         )}
       </div>

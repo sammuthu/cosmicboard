@@ -7,11 +7,14 @@ import PrismCard from '@/components/PrismCard'
 import {
   getThemeTemplate,
   getUserThemeCustomizations,
+  getUserActiveTheme,
   saveThemeCustomization,
   deleteThemeCustomization,
+  setActiveTheme,
   type ThemeTemplate,
   type ThemeColors,
-  type UserThemeCustomization
+  type UserThemeCustomization,
+  type UserTheme
 } from '@/lib/api/themes'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -24,12 +27,14 @@ export default function ThemeCustomizePage() {
   const [template, setTemplate] = useState<ThemeTemplate | null>(null)
   const [customColors, setCustomColors] = useState<ThemeColors | null>(null)
   const [existingCustomization, setExistingCustomization] = useState<UserThemeCustomization | null>(null)
+  const [activeTheme, setActiveThemeState] = useState<UserTheme | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [isReset, setIsReset] = useState(false)
   const [activeSection, setActiveSection] = useState<string>('background')
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null)
+  const [showDeviceDialog, setShowDeviceDialog] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -47,9 +52,14 @@ export default function ThemeCustomizePage() {
       const templateData = await getThemeTemplate(themeId)
       setTemplate(templateData)
 
-      // Check for existing user customizations
+      // Check for existing user customizations and active theme
       try {
-        const customizations = await getUserThemeCustomizations()
+        const [customizations, activeThemeData] = await Promise.all([
+          getUserThemeCustomizations(),
+          getUserActiveTheme()
+        ])
+
+        setActiveThemeState(activeThemeData)
         const existingCustom = customizations.find(c => c.themeId === themeId)
 
         if (existingCustom && existingCustom.customColors) {
@@ -90,7 +100,7 @@ export default function ThemeCustomizePage() {
     setCustomColors(newColors)
   }
 
-  const handleSave = async () => {
+  const handleSave = async (andApply: boolean = false) => {
     if (!customColors) return
 
     try {
@@ -103,13 +113,28 @@ export default function ThemeCustomizePage() {
         setExistingCustomization(result)
       }
 
-      // Navigate back to themes gallery
-      router.push('/themes')
+      if (andApply) {
+        setShowDeviceDialog(true)
+      } else {
+        // Navigate back to themes gallery
+        router.push('/themes')
+      }
     } catch (error) {
       console.error('Error saving theme customization:', error)
       alert('Failed to save theme customization. Please try again.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const applyThemeWithScope = async (isGlobal: boolean) => {
+    try {
+      setShowDeviceDialog(false)
+      await setActiveTheme(themeId, isGlobal, 'desktop')
+      // Navigate back to themes gallery or reload
+      router.push('/themes')
+    } catch (error) {
+      console.error('Error applying theme:', error)
     }
   }
 
@@ -194,7 +219,7 @@ export default function ThemeCustomizePage() {
               )}
             </button>
             <button
-              onClick={handleSave}
+              onClick={() => handleSave(activeTheme?.themeId === themeId)}
               disabled={saving || isReset}
               className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -206,7 +231,7 @@ export default function ThemeCustomizePage() {
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  <span>Save Theme</span>
+                  <span>{activeTheme?.themeId === themeId ? 'Save and Apply' : 'Save Theme'}</span>
                 </>
               )}
             </button>
@@ -548,6 +573,43 @@ export default function ThemeCustomizePage() {
           </div>
         </div>
       </div>
+
+      {/* Device Selection Dialog */}
+      {showDeviceDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <PrismCard className="max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-white mb-4">Apply Theme</h3>
+              <p className="text-gray-300 mb-6">
+                Where would you like to apply this customized theme?
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => applyThemeWithScope(false)}
+                  className="w-full px-4 py-3 rounded-lg font-medium bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all"
+                >
+                  This device only
+                </button>
+
+                <button
+                  onClick={() => applyThemeWithScope(true)}
+                  className="w-full px-4 py-3 rounded-lg font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-all"
+                >
+                  All devices
+                </button>
+
+                <button
+                  onClick={() => setShowDeviceDialog(false)}
+                  className="w-full px-4 py-3 rounded-lg font-medium bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </PrismCard>
+        </div>
+      )}
     </div>
   )
 }

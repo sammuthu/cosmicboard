@@ -96,8 +96,8 @@ export default function Home() {
       setApplyingTheme(true)
       setSelectedTheme(themeId)
 
-      // Apply theme through backend
-      await setActiveTheme(themeId)
+      // Apply theme through backend (always global from home page)
+      await setActiveTheme(themeId, true, 'desktop')
 
       // Refresh theme context to apply the new theme
       await refreshTheme()

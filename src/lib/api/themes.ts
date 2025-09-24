@@ -113,11 +113,17 @@ export async function saveThemeCustomization(themeId: string, customColors: Them
 
 // Set active theme without customization
 export async function setActiveTheme(themeId: string, isGlobal: boolean = true, deviceType?: 'mobile' | 'tablet' | 'desktop'): Promise<any> {
-  const data = await apiClient.post('/themes/user/set-active', {
+  const payload: any = {
     themeId,
-    isGlobal,
-    deviceType: isGlobal ? undefined : (deviceType || 'desktop')
-  })
+    isGlobal
+  }
+
+  // Only include deviceType if not global
+  if (!isGlobal) {
+    payload.deviceType = deviceType || 'desktop'
+  }
+
+  const data = await apiClient.post('/themes/user/set-active', payload)
   return data.data
 }
 

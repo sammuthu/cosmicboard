@@ -123,7 +123,7 @@ export default function ProjectDetailPage() {
   
   const photos = mediaData?.filter((m: any) => m.type === 'photo') || []
   const screenshots = mediaData?.filter((m: any) => m.type === 'screenshot') || []
-  const documents = mediaData?.filter((m: any) => m.type === 'PDF' || m.type === 'pdf') || [] // Check both cases
+  const documents = mediaData?.filter((m: any) => m.type === 'PDF' || m.type === 'pdf' || m.type === 'DOCUMENT') || [] // Check all document types
   
   // Debug logging
   if (activeTab === 'screenshots' && mediaData) {
@@ -285,15 +285,16 @@ export default function ProjectDetailPage() {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('projectId', projectId)
-    formData.append('type', 'pdf')
-    
+    formData.append('type', 'document')
+    formData.append('name', file.name)
+
     try {
       await apiClient.upload('/media/upload', formData)
       await mutate(`/api/media?projectId=${projectId}`)
-      toast.success('PDF uploaded successfully')
+      toast.success('Document uploaded successfully')
     } catch (error) {
-      console.error('PDF upload error:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to upload PDF')
+      console.error('Document upload error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to upload document')
     }
   }
   

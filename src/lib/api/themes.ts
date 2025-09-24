@@ -123,6 +123,8 @@ export async function setActiveTheme(themeId: string, isGlobal: boolean = true, 
     payload.deviceType = deviceType || 'desktop'
   }
 
+  console.log('Setting active theme with payload:', payload)
+
   const data = await apiClient.post('/themes/user/set-active', payload)
   return data.data
 }

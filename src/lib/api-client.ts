@@ -58,20 +58,29 @@ export const apiClient = {
 
   post: async (endpoint: string, data: any) => {
     try {
+      console.log(`API POST ${endpoint} with data:`, data)
+
       const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders()
         },
         body: JSON.stringify(data),
       })
-      
+
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: response.statusText }))
+        const errorText = await response.text()
+        console.error(`API POST ${endpoint} failed with status ${response.status}:`, errorText)
+        let error
+        try {
+          error = JSON.parse(errorText)
+        } catch {
+          error = { error: errorText || response.statusText }
+        }
         throw new Error(error.error || error.message || 'API call failed')
       }
-      
+
       return response.json()
     } catch (error) {
       console.error(`API POST ${endpoint} failed:`, error)

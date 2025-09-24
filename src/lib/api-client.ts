@@ -1,5 +1,6 @@
 // API client for frontend to communicate with backend
 import { getApiEndpoint } from '@/config/environment'
+import { getCachedDeviceInfo } from '@/lib/device-info'
 
 // Legacy support - will be deprecated
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7778'
@@ -10,28 +11,55 @@ export const getApiUrl = (endpoint: string) => {
   return getApiEndpoint(endpoint)
 }
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
+// Helper function to get auth headers and device info
+const getHeaders = (includeContentType: boolean = false) => {
+  const headers: Record<string, string> = {}
+
+  // Add auth token if available
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('auth_tokens')
     if (stored) {
       const tokens = JSON.parse(stored)
       if (tokens.accessToken) {
-        return { 'Authorization': `Bearer ${tokens.accessToken}` }
+        headers['Authorization'] = `Bearer ${tokens.accessToken}`
       }
     }
+
+    // Add device info headers (only in browser)
+    try {
+      const deviceInfo = getCachedDeviceInfo()
+      headers['X-Device-Type'] = deviceInfo.deviceType
+      headers['X-Device-OS'] = deviceInfo.deviceOS
+      headers['X-Device-Identifier'] = deviceInfo.deviceIdentifier
+      headers['X-Device-Name'] = deviceInfo.deviceName
+    } catch (error) {
+      // Use defaults if device info fails
+      headers['X-Device-Type'] = 'desktop'
+      headers['X-Device-OS'] = 'browser'
+      headers['X-Device-Identifier'] = 'unknown-device'
+      headers['X-Device-Name'] = 'Unknown Device'
+    }
   }
-  return {}
+
+  if (includeContentType) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  return headers
 }
 
 // Helper function for API calls with better error handling
 export const apiClient = {
-  get: async (endpoint: string) => {
+  get: async (endpoint: string, options?: { params?: Record<string, any> }) => {
     try {
-      const response = await fetch(getApiUrl(endpoint), {
-        headers: {
-          ...getAuthHeaders()
-        }
+      let url = getApiUrl(endpoint)
+      if (options?.params) {
+        const queryParams = new URLSearchParams(options.params).toString()
+        url += `?${queryParams}`
+      }
+
+      const response = await fetch(url, {
+        headers: getHeaders()
       })
       
       if (!response.ok) {
@@ -62,10 +90,7 @@ export const apiClient = {
 
       const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
+        headers: getHeaders(true),
         body: JSON.stringify(data),
       })
 
@@ -92,10 +117,7 @@ export const apiClient = {
     try {
       const response = await fetch(getApiUrl(endpoint), {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
+        headers: getHeaders(true),
         body: JSON.stringify(data),
       })
       
@@ -115,9 +137,7 @@ export const apiClient = {
     try {
       const response = await fetch(getApiUrl(endpoint), {
         method: 'DELETE',
-        headers: {
-          ...getAuthHeaders()
-        }
+        headers: getHeaders()
       })
       
       if (!response.ok) {
@@ -137,9 +157,7 @@ export const apiClient = {
     try {
       const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
-        headers: {
-          ...getAuthHeaders()
-        },
+        headers: getHeaders(),
         body: formData,
       })
       

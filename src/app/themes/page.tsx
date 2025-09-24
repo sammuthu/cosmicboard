@@ -73,8 +73,8 @@ export default function ThemesGalleryPage() {
       setApplying(selectedThemeForApplication)
       setShowDeviceDialog(false)
 
-      // For web, we always use 'desktop' as the device type
-      await setActiveTheme(selectedThemeForApplication, isGlobal, 'desktop')
+      // Device info will be automatically detected by the API
+      await setActiveTheme(selectedThemeForApplication, isGlobal)
       await loadThemes()
 
       // Apply theme to current page

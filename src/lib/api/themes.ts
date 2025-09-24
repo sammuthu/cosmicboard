@@ -112,15 +112,10 @@ export async function saveThemeCustomization(themeId: string, customColors: Them
 }
 
 // Set active theme without customization
-export async function setActiveTheme(themeId: string, isGlobal: boolean = true, deviceType?: 'mobile' | 'tablet' | 'desktop'): Promise<any> {
-  const payload: any = {
+export async function setActiveTheme(themeId: string, isGlobal: boolean = true): Promise<any> {
+  const payload = {
     themeId,
     isGlobal
-  }
-
-  // Only include deviceType if not global
-  if (!isGlobal) {
-    payload.deviceType = deviceType || 'desktop'
   }
 
   console.log('Setting active theme with payload:', payload)

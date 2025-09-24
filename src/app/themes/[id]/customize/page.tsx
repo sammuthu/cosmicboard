@@ -130,7 +130,8 @@ export default function ThemeCustomizePage() {
   const applyThemeWithScope = async (isGlobal: boolean) => {
     try {
       setShowDeviceDialog(false)
-      await setActiveTheme(themeId, isGlobal, 'desktop')
+      // Device info will be automatically detected by the API
+      await setActiveTheme(themeId, isGlobal)
       // Navigate back to themes gallery or reload
       router.push('/themes')
     } catch (error) {

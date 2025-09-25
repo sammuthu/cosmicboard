@@ -121,9 +121,15 @@ export default function ProjectDetailPage() {
     fetcher
   )
   
-  const photos = mediaData?.filter((m: any) => m.type === 'photo') || []
-  const screenshots = mediaData?.filter((m: any) => m.type === 'screenshot') || []
-  const documents = mediaData?.filter((m: any) => m.type === 'PDF' || m.type === 'pdf' || m.type === 'DOCUMENT') || [] // Check all document types
+  // Filter media by type - for documents/scrolls, include PDF and DOCUMENT types
+  const photos = mediaData?.filter((m: any) => m.type === 'PHOTO' || m.type === 'photo') || []
+  const screenshots = mediaData?.filter((m: any) => m.type === 'SCREENSHOT' || m.type === 'screenshot') || []
+  const documents = mediaData?.filter((m: any) =>
+    m.type === 'PDF' ||
+    m.type === 'pdf' ||
+    m.type === 'DOCUMENT' ||
+    m.type === 'document'
+  ) || [] // Include all document-like types
   
   // Debug logging
   if (activeTab === 'screenshots' && mediaData) {

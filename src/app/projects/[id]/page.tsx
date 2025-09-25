@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import useSWR, { mutate } from 'swr'
 import PrismCard from '@/components/PrismCard'
@@ -9,7 +9,8 @@ import SearchableSelect from '@/components/SearchableSelect'
 import PhotoGallery from '@/components/media/PhotoGallery'
 import ScreenshotCapture from '@/components/media/ScreenshotCapture'
 import DocumentViewer from '@/components/media/DocumentViewer'
-import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText } from 'lucide-react'
+import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText, Trash2, AlertTriangle } from 'lucide-react'
+import PriorityFilter, { PriorityLevel, SortOrder } from '@/components/PriorityFilter'
 import { apiClient, getApiUrl } from '@/lib/api-client'
 import { setupDevAuthTokens, checkAuthTokens } from '@/lib/dev-auth-helper'
 import { toast } from 'sonner'
@@ -98,6 +99,10 @@ export default function ProjectDetailPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   
   const [searchQuery, setSearchQuery] = useState('')
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [priorityFilter, setPriorityFilter] = useState<PriorityLevel>('all')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('priority-high')
   const [itemsPerPage, setItemsPerPage] = useState(11)
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -194,6 +199,21 @@ export default function ProjectDetailPage() {
         setShowNewTask(false)
     } catch (error) {
       console.error('Error creating task:', error)
+    }
+  }
+
+  const handleDeleteProject = async () => {
+    setIsDeleting(true)
+    try {
+      await apiClient.delete(`/projects/${projectId}`)
+      toast.success('Project moved to trash')
+      router.push('/')
+    } catch (error) {
+      console.error('Failed to delete project:', error)
+      toast.error('Failed to delete project')
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
     }
   }
 
@@ -358,19 +378,45 @@ export default function ProjectDetailPage() {
     }
   }
 
-  const filteredTasks = tasks?.filter((task: any) => {
-    const matchesStatus = 
-      (taskTab === 'active' && task.status === 'ACTIVE') ||
-      (taskTab === 'completed' && task.status === 'COMPLETED') ||
-      (taskTab === 'deleted' && task.status === 'DELETED')
-    
-    const matchesSearch = !searchQuery || 
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.contentHtml && task.contentHtml.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      task.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    
-    return matchesStatus && matchesSearch
-  }) || []
+  const filteredTasks = useMemo(() => {
+    let filtered = tasks?.filter((task: any) => {
+      const matchesStatus =
+        (taskTab === 'active' && task.status === 'ACTIVE') ||
+        (taskTab === 'completed' && task.status === 'COMPLETED') ||
+        (taskTab === 'deleted' && task.status === 'DELETED')
+
+      const matchesSearch = !searchQuery ||
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.contentHtml && task.contentHtml.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        task.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
+
+      return matchesStatus && matchesSearch && matchesPriority
+    }) || []
+
+    // Apply sorting
+    filtered.sort((a: any, b: any) => {
+      const priorityOrder = { SUPERNOVA: 3, STELLAR: 2, NEBULA: 1 }
+
+      switch (sortOrder) {
+        case 'priority-high':
+          return (priorityOrder[b.priority as keyof typeof priorityOrder] || 2) -
+                 (priorityOrder[a.priority as keyof typeof priorityOrder] || 2)
+        case 'priority-low':
+          return (priorityOrder[a.priority as keyof typeof priorityOrder] || 2) -
+                 (priorityOrder[b.priority as keyof typeof priorityOrder] || 2)
+        case 'date-new':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'date-old':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        default:
+          return 0
+      }
+    })
+
+    return filtered
+  }, [tasks, taskTab, searchQuery, priorityFilter, sortOrder])
 
   const filteredReferences = references?.filter((ref: any) => {
     return !searchQuery || 
@@ -449,12 +495,23 @@ export default function ProjectDetailPage() {
             </span>
           </button>
           
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
-            {project.name}
-          </h1>
-          {project.description && (
-            <p className="text-gray-400 mt-2">{project.description}</p>
-          )}
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
+                {project.name}
+              </h1>
+              {project.description && (
+                <p className="text-gray-400 mt-2">{project.description}</p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowDeleteDialog(true)}
+              className="ml-4 p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors duration-200"
+              title="Delete Project"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -560,7 +617,15 @@ export default function ProjectDetailPage() {
             <div className="mb-6 text-white/60 text-sm italic border-l-2 border-purple-500/50 pl-4">
               Your to-dos, plans, or trip checklists — basically everything you need to stay on track and not lose your mind 💯
             </div>
-            
+
+            {/* Priority Filter for Tasks */}
+            <PriorityFilter
+              currentPriority={priorityFilter}
+              currentSort={sortOrder}
+              onPriorityChange={setPriorityFilter}
+              onSortChange={setSortOrder}
+            />
+
             {/* Task Status Tabs Container */}
             <div className="relative mb-6">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-700/30 to-gray-600/30 rounded-xl blur-sm" />
@@ -1070,6 +1135,42 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </PrismCard>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full mx-4 border border-red-500/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-full bg-red-500/10">
+                <AlertTriangle className="w-6 h-6 text-red-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Delete Project</h3>
+            </div>
+
+            <p className="text-gray-400 mb-6">
+              Are you sure you want to delete "{project?.name}"?
+              This project will be moved to trash and can be restored later.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteProject}
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Project'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

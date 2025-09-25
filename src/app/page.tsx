@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Trash2, Archive, Search, Command, Download, Upload } from 'lucide-react'
+import { Plus, Trash2, Archive, Search, Command, Download, Upload, RotateCcw, FolderOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import CurrentPriority from '@/components/CurrentPriority'
+import PriorityFilter, { PriorityLevel, SortOrder } from '@/components/PriorityFilter'
 import ProjectCard from '@/components/ProjectCard'
 import PrismCard from '@/components/PrismCard'
 import SearchModal from '@/components/SearchModal'
@@ -27,6 +27,10 @@ export default function Home() {
   const [applyingTheme, setApplyingTheme] = useState(false)
   const [backendThemes, setBackendThemes] = useState<any[]>([])
   const [themesLoading, setThemesLoading] = useState(true)
+  const [showDeleted, setShowDeleted] = useState(false)
+  const [deletedProjects, setDeletedProjects] = useState([])
+  const [priorityFilter, setPriorityFilter] = useState<PriorityLevel>('all')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('priority-high')
 
   const router = useRouter()
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth()
@@ -176,16 +180,81 @@ export default function Home() {
 
   const currentTheme = themes.find(t => t.id === selectedTheme) || themes[1]
 
+  // Filter and sort projects
+  const filteredAndSortedProjects = useMemo(() => {
+    let filtered = [...projects]
+
+    // Apply priority filter if not showing all
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter((project: any) => {
+        // Check if any active task has the selected priority
+        const activeTasks = project.counts?.tasks?.active || 0
+        // For now, we'll need to implement priority at project level
+        // or fetch tasks with priority to filter properly
+        return true // Placeholder - needs backend support
+      })
+    }
+
+    // Apply sorting
+    filtered.sort((a: any, b: any) => {
+      switch (sortOrder) {
+        case 'priority-high':
+          // Sort by highest priority tasks first (needs backend support)
+          return 0
+        case 'priority-low':
+          // Sort by lowest priority tasks first (needs backend support)
+          return 0
+        case 'date-new':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'date-old':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        default:
+          return 0
+      }
+    })
+
+    return filtered
+  }, [projects, priorityFilter, sortOrder])
+
   const fetchProjects = async () => {
     try {
       const { apiClient } = await import('@/lib/api-client')
-      const data = await apiClient.get('/projects')
-      setProjects(data)
+      // Fetch active projects
+      const activeData = await apiClient.get('/projects')
+      setProjects(activeData)
+
+      // Fetch deleted projects
+      const deletedData = await apiClient.get('/projects?deleted=true')
+      setDeletedProjects(deletedData)
     } catch (error) {
       console.error('Failed to fetch projects:', error)
       toast.error('Failed to load projects')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRestoreProject = async (projectId: string) => {
+    try {
+      const { apiClient } = await import('@/lib/api-client')
+      await apiClient.post(`/projects/${projectId}/restore`)
+      toast.success('Project restored successfully')
+      fetchProjects()
+    } catch (error) {
+      console.error('Failed to restore project:', error)
+      toast.error('Failed to restore project')
+    }
+  }
+
+  const handlePermanentDelete = async (projectId: string) => {
+    try {
+      const { apiClient } = await import('@/lib/api-client')
+      await apiClient.delete(`/projects/${projectId}?permanent=true`)
+      toast.success('Project permanently deleted')
+      fetchProjects()
+    } catch (error) {
+      console.error('Failed to permanently delete project:', error)
+      toast.error('Failed to permanently delete project')
     }
   }
 
@@ -443,12 +512,37 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 relative z-10">
-        {/* Current Priority */}
-        <CurrentPriority />
+        {/* Priority Filter */}
+        <PriorityFilter
+          currentPriority={priorityFilter}
+          currentSort={sortOrder}
+          onPriorityChange={setPriorityFilter}
+          onSortChange={setSortOrder}
+        />
 
         {/* Projects Grid */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">Your Projects</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {showDeleted ? 'Deleted Projects' : 'Your Projects'}
+            </h2>
+            <button
+              onClick={() => setShowDeleted(!showDeleted)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
+            >
+              {showDeleted ? (
+                <>
+                  <FolderOpen className="w-4 h-4" />
+                  View Active Projects
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  View Deleted ({deletedProjects.length})
+                </>
+              )}
+            </button>
+          </div>
           
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -462,26 +556,73 @@ export default function Home() {
                 </PrismCard>
               ))}
             </div>
-          ) : projects.length === 0 ? (
-            <PrismCard>
-              <div className="text-center py-12">
-                <h3 className="text-xl font-bold text-gray-400 mb-4">No projects yet</h3>
-                <p className="text-gray-500 mb-6">Create your first project to start organizing your tasks</p>
-                <button
-                  onClick={() => setShowNewProject(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create First Project
-                </button>
+          ) : showDeleted ? (
+            // Deleted Projects View
+            deletedProjects.length === 0 ? (
+              <PrismCard>
+                <div className="text-center py-12">
+                  <Trash2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-400 mb-2">No deleted projects</h3>
+                  <p className="text-gray-500">Deleted projects will appear here</p>
+                </div>
+              </PrismCard>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {deletedProjects.map((project: any) => (
+                  <PrismCard key={project.id || project._id}>
+                    <div className="opacity-75">
+                      <h3 className="text-lg font-bold text-white mb-2">{project.name}</h3>
+                      {project.description && (
+                        <p className="text-gray-400 text-sm mb-4">{project.description}</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleRestoreProject(project.id || project._id)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg text-sm transition-colors"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Restore
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Permanently delete "${project.name}"? This cannot be undone.`)) {
+                              handlePermanentDelete(project.id || project._id)
+                            }
+                          }}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete Forever
+                        </button>
+                      </div>
+                    </div>
+                  </PrismCard>
+                ))}
               </div>
-            </PrismCard>
+            )
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project: any) => (
-                <ProjectCard key={project._id} project={project} />
-              ))}
-            </div>
+            // Active Projects View
+            projects.length === 0 ? (
+              <PrismCard>
+                <div className="text-center py-12">
+                  <h3 className="text-xl font-bold text-gray-400 mb-4">No projects yet</h3>
+                  <p className="text-gray-500 mb-6">Create your first project to start organizing your tasks</p>
+                  <button
+                    onClick={() => setShowNewProject(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create First Project
+                  </button>
+                </div>
+              </PrismCard>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredAndSortedProjects.map((project: any) => (
+                  <ProjectCard key={project._id} project={project} />
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>

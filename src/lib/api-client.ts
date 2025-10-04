@@ -120,15 +120,35 @@ export const apiClient = {
         headers: getHeaders(true),
         body: JSON.stringify(data),
       })
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: response.statusText }))
         throw new Error(error.error || error.message || 'API call failed')
       }
-      
+
       return response.json()
     } catch (error) {
       console.error(`API PUT ${endpoint} failed:`, error)
+      throw error
+    }
+  },
+
+  patch: async (endpoint: string, data: any) => {
+    try {
+      const response = await fetch(getApiUrl(endpoint), {
+        method: 'PATCH',
+        headers: getHeaders(true),
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: response.statusText }))
+        throw new Error(error.error || error.message || 'API call failed')
+      }
+
+      return response.json()
+    } catch (error) {
+      console.error(`API PATCH ${endpoint} failed:`, error)
       throw error
     }
   },

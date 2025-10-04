@@ -182,28 +182,38 @@ export default function Home() {
 
   // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
+    console.log('🔍 Filtering projects - Priority:', priorityFilter, 'Sort:', sortOrder)
+    console.log('📊 Total projects:', projects.length)
+
     let filtered = [...projects]
 
     // Apply priority filter if not showing all
     if (priorityFilter !== 'all') {
       filtered = filtered.filter((project: any) => {
-        // Check if any active task has the selected priority
-        const activeTasks = project.counts?.tasks?.active || 0
-        // For now, we'll need to implement priority at project level
-        // or fetch tasks with priority to filter properly
-        return true // Placeholder - needs backend support
+        const projectPriority = project.priority || 'NEBULA'
+        const matches = projectPriority === priorityFilter
+        console.log(`  Project "${project.name}": priority=${projectPriority}, matches=${matches}`)
+        return matches
       })
     }
+
+    console.log('📊 Filtered count:', filtered.length)
 
     // Apply sorting
     filtered.sort((a: any, b: any) => {
       switch (sortOrder) {
         case 'priority-high':
-          // Sort by highest priority tasks first (needs backend support)
-          return 0
+          // Sort by highest priority first (SUPERNOVA > STELLAR > NEBULA)
+          const priorityOrder = { SUPERNOVA: 3, STELLAR: 2, NEBULA: 1 }
+          const aPriority = a.priority || 'NEBULA'
+          const bPriority = b.priority || 'NEBULA'
+          return priorityOrder[bPriority] - priorityOrder[aPriority]
         case 'priority-low':
-          // Sort by lowest priority tasks first (needs backend support)
-          return 0
+          // Sort by lowest priority first (NEBULA > STELLAR > SUPERNOVA)
+          const priorityOrderLow = { SUPERNOVA: 3, STELLAR: 2, NEBULA: 1 }
+          const aPriorityLow = a.priority || 'NEBULA'
+          const bPriorityLow = b.priority || 'NEBULA'
+          return priorityOrderLow[aPriorityLow] - priorityOrderLow[bPriorityLow]
         case 'date-new':
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         case 'date-old':
@@ -213,6 +223,7 @@ export default function Home() {
       }
     })
 
+    console.log('✅ Final filtered & sorted projects:', filtered.map((p: any) => ({ name: p.name, priority: p.priority })))
     return filtered
   }, [projects, priorityFilter, sortOrder])
 
@@ -232,6 +243,18 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePriorityChange = (projectId: string, newPriority: string) => {
+    console.log('🔄 Home page: Priority changed', projectId, newPriority)
+    // Update projects state to keep filtering in sync
+    setProjects((prevProjects: any[]) =>
+      prevProjects.map((project: any) =>
+        project._id === projectId || project.id === projectId
+          ? { ...project, priority: newPriority }
+          : project
+      )
+    )
   }
 
   const handleRestoreProject = async (projectId: string) => {
@@ -619,7 +642,11 @@ export default function Home() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAndSortedProjects.map((project: any) => (
-                  <ProjectCard key={project._id} project={project} />
+                  <ProjectCard
+                    key={project._id}
+                    project={project}
+                    onPriorityChange={handlePriorityChange}
+                  />
                 ))}
               </div>
             )

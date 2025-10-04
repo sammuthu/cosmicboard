@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import useSWR, { mutate } from 'swr'
 import PrismCard from '@/components/PrismCard'
@@ -105,6 +105,12 @@ export default function ProjectDetailPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('priority-high')
   const [itemsPerPage, setItemsPerPage] = useState(11)
   const [currentPage, setCurrentPage] = useState(1)
+  const [showProjectPriorityMenu, setShowProjectPriorityMenu] = useState(false)
+  const [isUpdatingProjectPriority, setIsUpdatingProjectPriority] = useState(false)
+  const priorityMenuRef = useRef<HTMLDivElement>(null)
+
+  // Local state for immediate priority update
+  const [displayPriority, setDisplayPriority] = useState<string | null>(null)
 
   const { data: project, error: projectError } = useSWR(
     projectId ? `/api/projects/${projectId}` : null,
@@ -446,6 +452,55 @@ export default function ProjectDetailPage() {
     LOW: { name: 'Nebula', emoji: '🌌' }
   }
 
+  const projectPriorityEmojis: Record<string, string> = {
+    SUPERNOVA: '🌟',
+    STELLAR: '⭐',
+    NEBULA: '☁️'
+  }
+
+  const projectPriorityLabels: Record<string, string> = {
+    SUPERNOVA: 'SuperNova',
+    STELLAR: 'Stellar',
+    NEBULA: 'Nebula'
+  }
+
+  // Close priority menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (priorityMenuRef.current && !priorityMenuRef.current.contains(event.target as Node)) {
+        setShowProjectPriorityMenu(false)
+      }
+    }
+
+    if (showProjectPriorityMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showProjectPriorityMenu])
+
+  const handleProjectPriorityChange = async (newPriority: string) => {
+    const oldPriority = displayPriority || project?.priority
+
+    // Immediately update the UI (optimistic update)
+    setDisplayPriority(newPriority)
+    setShowProjectPriorityMenu(false)
+    setIsUpdatingProjectPriority(true)
+
+    try {
+      await apiClient.patch(`/projects/${projectId}/priority`, { priority: newPriority })
+      toast.success(`Project priority updated to ${projectPriorityLabels[newPriority]}`)
+      // Refresh project data in background
+      mutate(`/api/projects/${projectId}`)
+    } catch (error) {
+      console.error('Error updating project priority:', error)
+      toast.error('Failed to update project priority')
+      // Rollback on error
+      setDisplayPriority(oldPriority)
+    } finally {
+      setIsUpdatingProjectPriority(false)
+    }
+  }
+
   const getPriorityColor = (priority: string) => {
     switch(priority) {
       case 'HIGH': return 'text-red-400'
@@ -497,9 +552,43 @@ export default function ProjectDetailPage() {
           
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
-                {project.name}
-              </h1>
+              <div className="flex items-center gap-4">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
+                  {project.name}
+                </h1>
+
+                {/* Project Priority Selector */}
+                <div className="relative" ref={priorityMenuRef}>
+                  <button
+                    onClick={() => setShowProjectPriorityMenu(!showProjectPriorityMenu)}
+                    className="text-3xl hover:scale-110 transition-transform"
+                    title={`Project Priority: ${projectPriorityLabels[displayPriority || project?.priority || 'NEBULA']}`}
+                  >
+                    {projectPriorityEmojis[displayPriority || project?.priority || 'NEBULA']}
+                  </button>
+
+                  {showProjectPriorityMenu && (
+                    <div className="absolute left-0 top-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-2 min-w-[180px] z-50">
+                      {(['SUPERNOVA', 'STELLAR', 'NEBULA'] as const).map((priority) => {
+                        const currentPriority = displayPriority || project?.priority || 'NEBULA'
+                        return (
+                          <button
+                            key={priority}
+                            onClick={() => handleProjectPriorityChange(priority)}
+                            disabled={isUpdatingProjectPriority || priority === currentPriority}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 transition-colors text-left ${
+                              priority === currentPriority ? 'bg-gray-700 text-purple-400' : 'text-white'
+                            } ${isUpdatingProjectPriority ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <span className="text-2xl">{projectPriorityEmojis[priority]}</span>
+                            <span className="text-sm font-medium">{projectPriorityLabels[priority]}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
               {project.description && (
                 <p className="text-gray-400 mt-2">{project.description}</p>
               )}

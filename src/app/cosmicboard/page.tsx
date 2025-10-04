@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Plus, Trash2, Archive } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import { Plus, Trash2, Archive, Filter } from 'lucide-react'
 import CurrentPriority from '@/components/CurrentPriority'
 import ProjectCard from '@/components/ProjectCard'
 import PrismCard from '@/components/PrismCard'
 import { Toaster, toast } from 'sonner'
+
+type Priority = 'SUPERNOVA' | 'STELLAR' | 'NEBULA' | 'ALL'
 
 export default function CosmicBoard() {
   const [projects, setProjects] = useState([])
@@ -13,12 +15,13 @@ export default function CosmicBoard() {
   const [showNewProject, setShowNewProject] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState<Priority>('ALL')
+  const [sortByPriority, setSortByPriority] = useState(false)
 
   const fetchProjects = async () => {
     try {
-      const { getApiUrl } = await import('@/lib/api-client')
-      const res = await fetch(getApiUrl('/projects'))
-      const data = await res.json()
+      const { apiClient } = await import('@/lib/api-client')
+      const data = await apiClient.get('/projects')
       setProjects(data)
     } catch (error) {
       console.error('Failed to fetch projects:', error)
@@ -28,9 +31,58 @@ export default function CosmicBoard() {
     }
   }
 
+  const handlePriorityChange = (projectId: string, newPriority: string) => {
+    console.log('🔄 handlePriorityChange called:', { projectId, newPriority })
+
+    // Update parent state to keep filtering/sorting in sync
+    setProjects((prevProjects: any[]) => {
+      console.log('📦 Previous projects state:', prevProjects.map((p: any) => ({ id: p._id, name: p.name, priority: p.priority })))
+
+      const updatedProjects = prevProjects.map((project: any) => {
+        if (project._id === projectId || project.id === projectId) {
+          console.log(`✅ Updating project ${project.name} from ${project.priority} to ${newPriority}`)
+          return { ...project, priority: newPriority }
+        }
+        return project
+      })
+
+      console.log('📦 Updated projects state:', updatedProjects.map((p: any) => ({ id: p._id, name: p.name, priority: p.priority })))
+      return [...updatedProjects] // Return new array to force re-render
+    })
+  }
+
   useEffect(() => {
     fetchProjects()
   }, [])
+
+  // Memoize filtered and sorted projects for better performance
+  const filteredAndSortedProjects = useMemo(() => {
+    console.log('=== Filtering Projects ===')
+    console.log('Total projects:', projects.length)
+    console.log('Priority filter:', priorityFilter)
+    console.log('Sort by priority:', sortByPriority)
+    console.log('Projects data:', projects.map((p: any) => ({ id: p._id, name: p.name, priority: p.priority })))
+
+    const filtered = projects.filter((project: any) => {
+      const projectPriority = project.priority || 'NEBULA'
+      const matches = priorityFilter === 'ALL' ? true : projectPriority === priorityFilter
+      console.log(`Project ${project.name}: priority=${projectPriority}, filter=${priorityFilter}, matches=${matches}`)
+      return matches
+    })
+
+    console.log('Filtered count:', filtered.length)
+
+    const sorted = filtered.sort((a: any, b: any) => {
+      if (!sortByPriority) return 0
+      const priorityOrder = { SUPERNOVA: 0, STELLAR: 1, NEBULA: 2 }
+      const aPriority = a.priority || 'NEBULA'
+      const bPriority = b.priority || 'NEBULA'
+      return priorityOrder[aPriority] - priorityOrder[bPriority]
+    })
+
+    console.log('Final sorted projects:', sorted.map((p: any) => ({ name: p.name, priority: p.priority })))
+    return sorted
+  }, [projects, priorityFilter, sortByPriority])
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,11 +191,87 @@ export default function CosmicBoard() {
               </div>
             </PrismCard>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project: any) => (
-                <ProjectCard key={project._id} project={project} />
-              ))}
-            </div>
+            <>
+              {/* Priority Filters */}
+              <div className="flex gap-3 mb-6">
+                <button
+                  onClick={() => {
+                    console.log('🔘 Clicked ALL filter')
+                    setPriorityFilter('ALL')
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    priorityFilter === 'ALL'
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500'
+                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
+                  }`}
+                >
+                  All Priorities
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('🔘 Clicked SUPERNOVA filter')
+                    setPriorityFilter('SUPERNOVA')
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    priorityFilter === 'SUPERNOVA'
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500'
+                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
+                  }`}
+                >
+                  🌟 SuperNova
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('🔘 Clicked STELLAR filter')
+                    setPriorityFilter('STELLAR')
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    priorityFilter === 'STELLAR'
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500'
+                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
+                  }`}
+                >
+                  ⭐ Stellar
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('🔘 Clicked NEBULA filter')
+                    setPriorityFilter('NEBULA')
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    priorityFilter === 'NEBULA'
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500'
+                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
+                  }`}
+                >
+                  ☁️ Nebula
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('🔘 Toggled sort by priority:', !sortByPriority)
+                    setSortByPriority(!sortByPriority)
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                    sortByPriority
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500'
+                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
+                  }`}
+                >
+                  <Filter className="w-4 h-4" />
+                  Highest Priority First
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredAndSortedProjects.map((project: any) => (
+                  <ProjectCard
+                    key={project._id}
+                    project={project}
+                    onPriorityChange={handlePriorityChange}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

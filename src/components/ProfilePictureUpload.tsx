@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Cropper from 'react-easy-crop'
-import { Upload, X, Check, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'
+import { Upload, X, Check, RotateCw, ZoomIn, ZoomOut, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 
@@ -19,6 +19,18 @@ interface Area {
   height: number
 }
 
+interface AvatarHistory {
+  id: string
+  url: string
+  isActive: boolean
+  uploadedAt: string
+  metadata?: {
+    originalFormat?: string
+    size?: number
+    fileName?: string
+  }
+}
+
 export default function ProfilePictureUpload({
   currentAvatar,
   onUploadComplete,
@@ -30,8 +42,55 @@ export default function ProfilePictureUpload({
   const [rotation, setRotation] = useState(0)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [showGallery, setShowGallery] = useState(!currentAvatar) // Show gallery initially if no avatar
+  const [avatarHistory, setAvatarHistory] = useState<AvatarHistory[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch avatar history on mount
+  useEffect(() => {
+    fetchAvatarHistory()
+  }, [])
+
+  const fetchAvatarHistory = async () => {
+    try {
+      setLoadingHistory(true)
+      const history = await apiClient.get('/auth/avatar-history')
+      setAvatarHistory(history)
+    } catch (error) {
+      console.error('Failed to fetch avatar history:', error)
+      toast.error('Failed to load avatar history')
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const handleDeleteAvatar = async (avatarId: string) => {
+    try {
+      await apiClient.delete(`/auth/avatar/${avatarId}`)
+      toast.success('Avatar deleted')
+      // Update local state
+      setAvatarHistory(prev => prev.filter(a => a.id !== avatarId))
+    } catch (error: any) {
+      console.error('Failed to delete avatar:', error)
+      toast.error(error.message || 'Failed to delete avatar')
+    }
+  }
+
+  const handleSetActiveAvatar = async (avatarId: string, avatarUrl: string) => {
+    try {
+      await apiClient.patch(`/auth/avatar/${avatarId}/activate`, {})
+      toast.success('Avatar updated')
+      // Update local state
+      setAvatarHistory(prev =>
+        prev.map(a => ({ ...a, isActive: a.id === avatarId }))
+      )
+      // Notify parent component
+      onUploadComplete(avatarUrl)
+    } catch (error: any) {
+      console.error('Failed to set active avatar:', error)
+      toast.error(error.message || 'Failed to update avatar')
+    }
+  }
 
   const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
@@ -163,6 +222,8 @@ export default function ProfilePictureUpload({
       const response = await apiClient.upload('/auth/profile-picture', formData)
 
       toast.success('Profile picture updated!')
+      // Refresh avatar history
+      await fetchAvatarHistory()
       onUploadComplete(response.avatar)
     } catch (error) {
       console.error('Error uploading profile picture:', error)
@@ -190,50 +251,76 @@ export default function ProfilePictureUpload({
         <div className="p-6">
           {!imageSrc ? (
             <div>
-              {/* Current Avatar Section */}
-              {currentAvatar && (
+              {/* Avatar Gallery */}
+              {avatarHistory.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-3">Current Profile Picture</h3>
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-800">
-                      <img
-                        src={currentAvatar}
-                        alt="Current avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-gray-400 text-sm mb-2">This is your active profile picture</p>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+                  <h3 className="text-lg font-semibold text-white mb-3">Your Profile Pictures</h3>
+                  <div className="grid grid-cols-4 gap-3 mb-4">
+                    {avatarHistory.map((avatar) => (
+                      <div
+                        key={avatar.id}
+                        className="relative group"
                       >
-                        Upload New Picture
-                      </button>
-                    </div>
+                        <div
+                          className={`relative w-full aspect-square rounded-lg overflow-hidden bg-gray-800 cursor-pointer transition-all ${
+                            avatar.isActive
+                              ? 'ring-2 ring-purple-500'
+                              : 'hover:ring-2 hover:ring-gray-500'
+                          }`}
+                          onClick={() => !avatar.isActive && handleSetActiveAvatar(avatar.id, avatar.url)}
+                        >
+                          <img
+                            src={avatar.url}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
+                          {avatar.isActive && (
+                            <div className="absolute top-2 left-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-md">
+                              Active
+                            </div>
+                          )}
+                        </div>
+                        {!avatar.isActive && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteAvatar(avatar.id)
+                            }}
+                            className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            title="Delete avatar"
+                          >
+                            <X className="w-4 h-4 text-white" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
+                  <p className="text-gray-400 text-sm">
+                    Click on any avatar to set it as active. Delete inactive avatars with the × button.
+                  </p>
                 </div>
               )}
 
               {/* Upload Section */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-600 hover:border-purple-500 rounded-xl p-12 text-center cursor-pointer transition-colors"
-              >
-                <Upload className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                <p className="text-gray-300 text-lg mb-2">
-                  {currentAvatar ? 'Upload a new picture' : 'Click to upload image'}
-                </p>
-                <p className="text-gray-500 text-sm">
-                  Supports: JPG, PNG, GIF, HEIC • Max size: 10MB
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,.heic,.heif"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Upload New Picture</h3>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-gray-600 hover:border-purple-500 rounded-xl p-8 text-center cursor-pointer transition-colors"
+                >
+                  <Upload className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                  <p className="text-gray-300 mb-2">Click to upload image</p>
+                  <p className="text-gray-500 text-sm">
+                    Supports: JPG, PNG, GIF, HEIC • Max size: 10MB
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,.heic,.heif"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </div>
               </div>
             </div>
           ) : (

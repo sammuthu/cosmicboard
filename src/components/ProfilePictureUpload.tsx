@@ -36,7 +36,7 @@ export default function ProfilePictureUpload({
     setCroppedAreaPixels(croppedAreaPixels)
   }, [])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -55,11 +55,41 @@ export default function ProfilePictureUpload({
       return
     }
 
+    // Check if it's HEIC and convert to JPEG for browser compatibility
+    let fileToRead = file
+    const isHEIC = file.name.toLowerCase().endsWith('.heic') ||
+                   file.name.toLowerCase().endsWith('.heif') ||
+                   file.type === 'image/heic' ||
+                   file.type === 'image/heif'
+
+    if (isHEIC) {
+      try {
+        toast.info('Converting HEIC image...')
+        const heic2any = (await import('heic2any')).default
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.9
+        })
+
+        // heic2any can return Blob or Blob[], handle both cases
+        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob
+        fileToRead = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), {
+          type: 'image/jpeg'
+        })
+        toast.success('Image converted successfully!')
+      } catch (error) {
+        console.error('Error converting HEIC:', error)
+        toast.error('Failed to convert HEIC image. Please try a different file.')
+        return
+      }
+    }
+
     const reader = new FileReader()
     reader.onload = () => {
       setImageSrc(reader.result as string)
     }
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(fileToRead)
   }
 
   const createImage = (url: string): Promise<HTMLImageElement> =>

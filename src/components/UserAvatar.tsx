@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { User, LogOut, Settings, Bell, Users, MessageSquare, Share2, UserPlus, Palette } from 'lucide-react'
+import { User, LogOut, Settings, Bell, Users, MessageSquare, Share2, UserPlus, Palette, Camera } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import ProfilePictureUpload from './ProfilePictureUpload'
 
 interface UserAvatarProps {
   onOpenSidebar?: () => void
@@ -11,9 +12,10 @@ interface UserAvatarProps {
 
 export default function UserAvatar({ onOpenSidebar }: UserAvatarProps) {
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showProfilePictureUpload, setShowProfilePictureUpload] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, logout, refreshUser } = useAuth()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,12 +82,25 @@ export default function UserAvatar({ onOpenSidebar }: UserAvatarProps) {
           {/* User Info Header */}
           <div className="p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-purple-500/20">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getAvatarColor()} flex items-center justify-center text-white font-semibold`}>
-                {user?.avatar ? (
-                  <img src={user.avatar} alt={user.name || user.email} className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  <span>{getInitials()}</span>
-                )}
+              <div className="relative">
+                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getAvatarColor()} flex items-center justify-center text-white font-semibold overflow-hidden`}>
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user.name || user.email} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <span>{getInitials()}</span>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowProfilePictureUpload(true)
+                    setShowDropdown(false)
+                  }}
+                  className="absolute -bottom-1 -right-1 p-1.5 bg-purple-500 rounded-full hover:bg-purple-600 transition-colors shadow-lg"
+                  title="Change profile picture"
+                >
+                  <Camera className="w-3 h-3 text-white" />
+                </button>
               </div>
               <div className="flex-1">
                 <p className="text-white font-medium">{user?.name || user?.email?.split('@')[0]}</p>
@@ -196,6 +211,18 @@ export default function UserAvatar({ onOpenSidebar }: UserAvatarProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Profile Picture Upload Modal */}
+      {showProfilePictureUpload && (
+        <ProfilePictureUpload
+          currentAvatar={user?.avatar}
+          onUploadComplete={(avatarUrl) => {
+            setShowProfilePictureUpload(false)
+            refreshUser()
+          }}
+          onCancel={() => setShowProfilePictureUpload(false)}
+        />
       )}
     </div>
   )

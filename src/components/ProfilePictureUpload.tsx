@@ -30,6 +30,7 @@ export default function ProfilePictureUpload({
   const [rotation, setRotation] = useState(0)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [showGallery, setShowGallery] = useState(!currentAvatar) // Show gallery initially if no avatar
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
@@ -188,23 +189,52 @@ export default function ProfilePictureUpload({
         {/* Content */}
         <div className="p-6">
           {!imageSrc ? (
-            // File selection
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-600 hover:border-purple-500 rounded-xl p-12 text-center cursor-pointer transition-colors"
-            >
-              <Upload className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-300 text-lg mb-2">Click to upload image</p>
-              <p className="text-gray-500 text-sm">
-                Supports: JPG, PNG, GIF, HEIC • Max size: 10MB
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.heic,.heif"
-                onChange={handleFileChange}
-                className="hidden"
-              />
+            <div>
+              {/* Current Avatar Section */}
+              {currentAvatar && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-3">Current Profile Picture</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-800">
+                      <img
+                        src={currentAvatar}
+                        alt="Current avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-gray-400 text-sm mb-2">This is your active profile picture</p>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+                      >
+                        Upload New Picture
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Section */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-600 hover:border-purple-500 rounded-xl p-12 text-center cursor-pointer transition-colors"
+              >
+                <Upload className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-300 text-lg mb-2">
+                  {currentAvatar ? 'Upload a new picture' : 'Click to upload image'}
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Supports: JPG, PNG, GIF, HEIC • Max size: 10MB
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.heic,.heif"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
             </div>
           ) : (
             // Image cropping

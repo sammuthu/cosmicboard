@@ -229,8 +229,14 @@ export default function ProfilePictureUpload({
                 {/* Zoom */}
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => setZoom(Math.max(1, zoom - 0.1))}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setZoom(Math.max(1, zoom - 0.1))
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={zoom <= 1}
                   >
                     <ZoomOut className="w-5 h-5 text-gray-400" />
@@ -245,8 +251,14 @@ export default function ProfilePictureUpload({
                     className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   />
                   <button
-                    onClick={() => setZoom(Math.min(3, zoom + 0.1))}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setZoom(Math.min(3, zoom + 0.1))
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={zoom >= 3}
                   >
                     <ZoomIn className="w-5 h-5 text-gray-400" />
@@ -256,7 +268,13 @@ export default function ProfilePictureUpload({
                 {/* Rotation */}
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => setRotation((rotation - 15 + 360) % 360)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setRotation((rotation - 15 + 360) % 360)
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
                     className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <RotateCw className="w-5 h-5 text-gray-400 transform scale-x-[-1]" />
@@ -271,7 +289,13 @@ export default function ProfilePictureUpload({
                     className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   />
                   <button
-                    onClick={() => setRotation((rotation + 15) % 360)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setRotation((rotation + 15) % 360)
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
                     className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <RotateCw className="w-5 h-5 text-gray-400" />

@@ -40,13 +40,18 @@ export default function ProfilePictureUpload({
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
+    // Check if it's an image (including HEIC)
+    const isImage = file.type.startsWith('image/') ||
+                    file.name.toLowerCase().endsWith('.heic') ||
+                    file.name.toLowerCase().endsWith('.heif')
+
+    if (!isImage) {
       toast.error('Please select an image file')
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB')
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB')
       return
     }
 
@@ -161,12 +166,12 @@ export default function ProfilePictureUpload({
               <Upload className="w-16 h-16 text-gray-500 mx-auto mb-4" />
               <p className="text-gray-300 text-lg mb-2">Click to upload image</p>
               <p className="text-gray-500 text-sm">
-                Supports: JPG, PNG, GIF • Max size: 5MB
+                Supports: JPG, PNG, GIF, HEIC • Max size: 10MB
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.heif"
                 onChange={handleFileChange}
                 className="hidden"
               />

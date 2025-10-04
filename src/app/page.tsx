@@ -392,52 +392,50 @@ export default function Home() {
       <Toaster position="top-right" theme="dark" />
       <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} />
       
-      {/* Theme Selector with User Avatar */}
-      <div className="pt-8 pb-4 px-4 relative z-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative group">
+      {/* User Avatar - Top Right */}
+      <div className="absolute top-4 right-4 z-50">
+        <UserAvatar onOpenSidebar={() => setShowNetworkSidebar(true)} />
+      </div>
+
+      {/* Theme Selector */}
+      <div className="pt-8 pb-4 px-4 relative z-40">
+        <div className="flex justify-center">
+          <div className="relative group inline-block">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-3xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur"></div>
-            <div className="relative rounded-3xl p-6 shadow-2xl backdrop-blur-sm" style={{
+            <div className="relative rounded-3xl px-8 py-6 shadow-2xl backdrop-blur-sm" style={{
               background: `linear-gradient(135deg, var(--theme-card-bg-from), var(--theme-card-bg-via), var(--theme-card-bg-to))`,
               borderColor: 'var(--theme-card-border)',
               borderWidth: '1px',
               borderStyle: 'solid'
             }}>
-              <div className="flex justify-between items-center">
-                {/* Theme Icons */}
-                <div className="flex-1 flex justify-center items-center gap-6">
-                  {themesLoading ? (
-                    <div className="text-white/60">Loading themes...</div>
-                  ) : themes.length === 0 ? (
-                    <div className="text-white/60">No themes available</div>
-                  ) : (
-                    themes.map((theme) => (
-                    <button
-                      key={theme.id}
-                      onClick={() => handleThemeSelect(theme.id)}
-                      disabled={applyingTheme}
-                      className={`relative group transition-all duration-300 ${
-                        selectedTheme === theme.id ? 'scale-125' : 'scale-100 hover:scale-110'
-                      } ${applyingTheme ? 'opacity-50' : ''}`}
-                      aria-label={`Select ${theme.name} theme`}
-                    >
-                      <span className={`text-4xl block transition-all duration-300 ${
-                        selectedTheme === theme.id ? 'drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]' : ''
-                      } ${applyingTheme && selectedTheme === theme.id ? 'animate-pulse' : ''}`}>
-                        {theme.icon}
-                      </span>
-                      {selectedTheme === theme.id && (
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
-                      )}
-                    </button>
-                  ))
-                  )}
-                </div>
-                
-                {/* User Avatar */}
-                <div className="ml-8">
-                  <UserAvatar onOpenSidebar={() => setShowNetworkSidebar(true)} />
-                </div>
+              {/* Theme Icons */}
+              <div className="flex items-center gap-4 lg:gap-6">
+                {themesLoading ? (
+                  <div className="text-white/60">Loading themes...</div>
+                ) : themes.length === 0 ? (
+                  <div className="text-white/60">No themes available</div>
+                ) : (
+                  themes.map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => handleThemeSelect(theme.id)}
+                    disabled={applyingTheme}
+                    className={`relative group transition-all duration-300 ${
+                      selectedTheme === theme.id ? 'scale-125' : 'scale-100 hover:scale-110'
+                    } ${applyingTheme ? 'opacity-50' : ''}`}
+                    aria-label={`Select ${theme.name} theme`}
+                  >
+                    <span className={`text-4xl block transition-all duration-300 ${
+                      selectedTheme === theme.id ? 'drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]' : ''
+                    } ${applyingTheme && selectedTheme === theme.id ? 'animate-pulse' : ''}`}>
+                      {theme.icon}
+                    </span>
+                    {selectedTheme === theme.id && (
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
+                    )}
+                  </button>
+                ))
+                )}
               </div>
             </div>
           </div>
@@ -464,11 +462,11 @@ export default function Home() {
             borderWidth: '1px',
             borderStyle: 'solid'
           }}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-3">
               {/* Search */}
               <button
                 onClick={() => setShowSearch(true)}
-                className="relative flex flex-col items-center justify-center gap-2 p-4 text-blue-400 hover:bg-blue-500/10 transition-all duration-300 border-r border-b border-white/10 group/item"
+                className="relative flex flex-col items-center justify-center gap-2 p-6 text-blue-400 hover:bg-blue-500/10 transition-all duration-300 border-r border-white/10 group/item"
               >
                 <Search className="w-6 h-6 group-hover/item:scale-110 transition-transform" />
                 <span className="text-sm font-medium">Search</span>
@@ -476,55 +474,26 @@ export default function Home() {
                   ⌘K
                 </kbd>
               </button>
-              
+
               {/* New Project */}
               <button
                 onClick={() => setShowNewProject(true)}
-                className="relative flex flex-col items-center justify-center gap-2 p-4 text-purple-400 hover:bg-purple-500/10 transition-all duration-300 border-r border-b border-white/10 group/item"
+                className="relative flex flex-col items-center justify-center gap-2 p-6 text-purple-400 hover:bg-purple-500/10 transition-all duration-300 border-r border-white/10 group/item"
               >
                 <Plus className="w-6 h-6 group-hover/item:scale-110 transition-transform" />
                 <span className="text-sm font-medium">New Project</span>
               </button>
-              
-              {/* Completed */}
-              <a
-                href="/completed"
-                className="relative flex flex-col items-center justify-center gap-2 p-4 text-green-400 hover:bg-green-500/10 transition-all duration-300 border-r border-b border-white/10 group/item lg:border-r-0 md:border-r"
-              >
-                <Archive className="w-6 h-6 group-hover/item:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Completed</span>
-              </a>
-              
+
               {/* Recycle Bin */}
-              <a
-                href="/recycle-bin"
-                className="relative flex flex-col items-center justify-center gap-2 p-4 text-red-400 hover:bg-red-500/10 transition-all duration-300 border-r border-b border-white/10 group/item lg:border-b-0"
+              <button
+                onClick={() => setShowDeleted(!showDeleted)}
+                className="relative flex flex-col items-center justify-center gap-2 p-6 text-red-400 hover:bg-red-500/10 transition-all duration-300 group/item"
               >
                 <Trash2 className="w-6 h-6 group-hover/item:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Recycle Bin</span>
-              </a>
-              
-              {/* Export */}
-              <button
-                onClick={handleExport}
-                className="relative flex flex-col items-center justify-center gap-2 p-4 text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300 border-r border-b border-white/10 group/item md:border-b-0 lg:border-b-0"
-                title="Export all data"
-              >
-                <Download className="w-6 h-6 group-hover/item:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Export</span>
+                <span className="text-sm font-medium">
+                  Recycle Bin {deletedProjects.length > 0 && `(${deletedProjects.length})`}
+                </span>
               </button>
-              
-              {/* Import */}
-              <label className="relative flex flex-col items-center justify-center gap-2 p-4 text-orange-400 hover:bg-orange-500/10 transition-all duration-300 border-b border-white/10 cursor-pointer group/item md:border-b-0 lg:border-b-0 lg:border-r-0">
-                <Upload className="w-6 h-6 group-hover/item:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Import</span>
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleImport}
-                  className="hidden"
-                />
-              </label>
             </div>
           </div>
         </div>
@@ -549,22 +518,6 @@ export default function Home() {
             <h2 className="text-2xl font-bold text-white">
               {showDeleted ? 'Deleted Projects' : 'Your Projects'}
             </h2>
-            <button
-              onClick={() => setShowDeleted(!showDeleted)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            >
-              {showDeleted ? (
-                <>
-                  <FolderOpen className="w-4 h-4" />
-                  View Active Projects
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4" />
-                  View Deleted ({deletedProjects.length})
-                </>
-              )}
-            </button>
           </div>
           
           {loading ? (

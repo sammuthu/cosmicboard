@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Users, MessageSquare, Share2, Bell, TrendingUp, Clock, Heart, MessageCircle, Send, MoreHorizontal, Eye } from 'lucide-react'
+import { X, Users, MessageSquare, Share2, Bell, TrendingUp, Clock, Heart, MessageCircle, Send, MoreHorizontal, Eye, User, Camera } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import PrismCard from './PrismCard'
+import ProfilePictureUpload from './ProfilePictureUpload'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface NetworkItem {
   id: string
@@ -38,10 +40,12 @@ interface NetworkSidebarProps {
 }
 
 export default function NetworkSidebar({ isOpen, onClose }: NetworkSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'feed' | 'shared' | 'activity'>('feed')
+  const [activeTab, setActiveTab] = useState<'feed' | 'shared' | 'activity' | 'profile'>('feed')
   const [networkItems, setNetworkItems] = useState<NetworkItem[]>([])
   const [newComment, setNewComment] = useState<{ [key: string]: string }>({})
   const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({})
+  const [showProfilePictureUpload, setShowProfilePictureUpload] = useState(false)
+  const { user, refreshUser } = useAuth()
 
   useEffect(() => {
     // Fetch network feed
@@ -161,44 +165,57 @@ export default function NetworkSidebar({ isOpen, onClose }: NetworkSidebarProps)
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2">
+          <div className="grid grid-cols-4 gap-2">
             <button
               onClick={() => setActiveTab('feed')}
-              className={`flex-1 px-3 py-2 rounded-lg transition-colors ${
-                activeTab === 'feed' 
-                  ? 'bg-purple-500/20 text-purple-400' 
+              className={`px-2 py-2 rounded-lg transition-colors ${
+                activeTab === 'feed'
+                  ? 'bg-purple-500/20 text-purple-400'
                   : 'text-gray-400 hover:bg-white/5'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
-                Feed
+                <span className="text-xs">Feed</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('shared')}
-              className={`flex-1 px-3 py-2 rounded-lg transition-colors ${
-                activeTab === 'shared' 
-                  ? 'bg-purple-500/20 text-purple-400' 
+              className={`px-2 py-2 rounded-lg transition-colors ${
+                activeTab === 'shared'
+                  ? 'bg-purple-500/20 text-purple-400'
                   : 'text-gray-400 hover:bg-white/5'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <Share2 className="w-4 h-4" />
-                Shared
+                <span className="text-xs">Shared</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('activity')}
-              className={`flex-1 px-3 py-2 rounded-lg transition-colors ${
-                activeTab === 'activity' 
-                  ? 'bg-purple-500/20 text-purple-400' 
+              className={`px-2 py-2 rounded-lg transition-colors ${
+                activeTab === 'activity'
+                  ? 'bg-purple-500/20 text-purple-400'
                   : 'text-gray-400 hover:bg-white/5'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <Clock className="w-4 h-4" />
-                Activity
+                <span className="text-xs">Activity</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`px-2 py-2 rounded-lg transition-colors ${
+                activeTab === 'profile'
+                  ? 'bg-purple-500/20 text-purple-400'
+                  : 'text-gray-400 hover:bg-white/5'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <User className="w-4 h-4" />
+                <span className="text-xs">Profile</span>
               </div>
             </button>
           </div>
@@ -330,8 +347,87 @@ export default function NetworkSidebar({ isOpen, onClose }: NetworkSidebarProps)
               <p className="text-gray-400">Your activity history</p>
             </div>
           )}
+
+          {activeTab === 'profile' && (
+            <div className="space-y-6">
+              {/* Profile Picture Section */}
+              <PrismCard variant="glass" className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Profile Picture</h3>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-semibold overflow-hidden">
+                      {user?.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt={user.name || user.email}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>
+                          {user?.name
+                            ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                            : user?.email?.slice(0, 2).toUpperCase() || 'U'}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setShowProfilePictureUpload(true)}
+                      className="absolute bottom-0 right-0 p-2 bg-purple-500 rounded-full hover:bg-purple-600 transition-colors shadow-lg"
+                    >
+                      <Camera className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">{user?.name || 'User'}</p>
+                    <p className="text-gray-400 text-sm">{user?.email}</p>
+                    <button
+                      onClick={() => setShowProfilePictureUpload(true)}
+                      className="mt-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                    >
+                      Change profile picture
+                    </button>
+                  </div>
+                </div>
+              </PrismCard>
+
+              {/* Profile Info Section */}
+              <PrismCard variant="glass" className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Profile Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm text-gray-400">Name</label>
+                    <p className="text-white">{user?.name || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400">Email</label>
+                    <p className="text-white">{user?.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400">Username</label>
+                    <p className="text-white">{user?.username || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400">Bio</label>
+                    <p className="text-white">{user?.bio || 'Not set'}</p>
+                  </div>
+                </div>
+              </PrismCard>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Profile Picture Upload Modal */}
+      {showProfilePictureUpload && (
+        <ProfilePictureUpload
+          currentAvatar={user?.avatar}
+          onUploadComplete={(avatarUrl) => {
+            setShowProfilePictureUpload(false)
+            refreshUser()
+          }}
+          onCancel={() => setShowProfilePictureUpload(false)}
+        />
+      )}
     </>
   )
 }

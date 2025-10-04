@@ -21,6 +21,7 @@ interface AuthContextType {
   verifyMagicLink: (token: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<boolean>;
+  refreshUser: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -131,8 +132,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return false;
   };
 
+  const refreshUser = async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider 
+    <AuthContext.Provider
       value={{
         user,
         loading,
@@ -142,6 +154,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         verifyMagicLink,
         logout,
         updateProfile,
+        refreshUser,
         checkAuth
       }}
     >

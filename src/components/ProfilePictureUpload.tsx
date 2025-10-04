@@ -64,7 +64,7 @@ export default function ProfilePictureUpload({
 
     if (isHEIC) {
       try {
-        toast.info('Converting HEIC image...')
+        const loadingToast = toast.loading('Converting HEIC image...')
         const heic2any = (await import('heic2any')).default
         const convertedBlob = await heic2any({
           blob: file,
@@ -77,7 +77,7 @@ export default function ProfilePictureUpload({
         fileToRead = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), {
           type: 'image/jpeg'
         })
-        toast.success('Image converted successfully!')
+        toast.dismiss(loadingToast)
       } catch (error) {
         console.error('Error converting HEIC:', error)
         toast.error('Failed to convert HEIC image. Please try a different file.')
@@ -228,7 +228,13 @@ export default function ProfilePictureUpload({
               <div className="mt-6 space-y-4">
                 {/* Zoom */}
                 <div className="flex items-center gap-4">
-                  <ZoomOut className="w-5 h-5 text-gray-400" />
+                  <button
+                    onClick={() => setZoom(Math.max(1, zoom - 0.1))}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                    disabled={zoom <= 1}
+                  >
+                    <ZoomOut className="w-5 h-5 text-gray-400" />
+                  </button>
                   <input
                     type="range"
                     value={zoom}
@@ -238,12 +244,23 @@ export default function ProfilePictureUpload({
                     onChange={(e) => setZoom(Number(e.target.value))}
                     className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <ZoomIn className="w-5 h-5 text-gray-400" />
+                  <button
+                    onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                    disabled={zoom >= 3}
+                  >
+                    <ZoomIn className="w-5 h-5 text-gray-400" />
+                  </button>
                 </div>
 
                 {/* Rotation */}
                 <div className="flex items-center gap-4">
-                  <RotateCw className="w-5 h-5 text-gray-400" />
+                  <button
+                    onClick={() => setRotation((rotation - 15 + 360) % 360)}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    <RotateCw className="w-5 h-5 text-gray-400 transform scale-x-[-1]" />
+                  </button>
                   <input
                     type="range"
                     value={rotation}
@@ -253,6 +270,12 @@ export default function ProfilePictureUpload({
                     onChange={(e) => setRotation(Number(e.target.value))}
                     className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   />
+                  <button
+                    onClick={() => setRotation((rotation + 15) % 360)}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    <RotateCw className="w-5 h-5 text-gray-400" />
+                  </button>
                   <span className="text-gray-400 text-sm w-12">{rotation}°</span>
                 </div>
               </div>

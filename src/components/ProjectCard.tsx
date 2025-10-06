@@ -173,7 +173,7 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
         <button
           onClick={(e) => handleAssetClick(e, 'radar')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-blue-500/50 transition-all"
-          title="Radar (Tasks)"
+          title="📌 Radar - Tasks and action items"
         >
           <span className="text-base">📌</span>
           <span className="text-sm font-semibold text-blue-400">{radar.created + radar.inProgress + radar.completed}</span>
@@ -183,7 +183,7 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
         <button
           onClick={(e) => handleAssetClick(e, 'neural-notes')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-purple-500/50 transition-all"
-          title="Neural Notes"
+          title="🧠 Neural Notes - Code snippets, docs, links, and notes"
         >
           <span className="text-base">🧠</span>
           <span className="text-sm font-semibold text-purple-400">{neuralNotes}</span>
@@ -193,7 +193,7 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
         <button
           onClick={(e) => handleAssetClick(e, 'moments')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-pink-500/50 transition-all"
-          title="Moments (Photos)"
+          title="📸 Moments - Photos and images"
         >
           <span className="text-base">📸</span>
           <span className="text-sm font-semibold text-pink-400">{moments}</span>
@@ -203,7 +203,7 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
         <button
           onClick={(e) => handleAssetClick(e, 'snaps')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-cyan-500/50 transition-all"
-          title="Snaps (Screenshots)"
+          title="📎 Snaps - Screenshots and captures"
         >
           <span className="text-base">📎</span>
           <span className="text-sm font-semibold text-cyan-400">{snaps}</span>
@@ -213,7 +213,7 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
         <button
           onClick={(e) => handleAssetClick(e, 'scrolls')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-amber-500/50 transition-all"
-          title="Scrolls (Documents)"
+          title="📄 Scrolls - PDFs and documents"
         >
           <span className="text-base">📄</span>
           <span className="text-sm font-semibold text-amber-400">{scrolls}</span>

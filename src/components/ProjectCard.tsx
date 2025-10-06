@@ -164,82 +164,60 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
 
       <h3 className="text-xl font-bold text-white mb-2 pr-12">{project.name}</h3>
       {project.description && (
-        <p className="text-gray-400 text-sm mb-4 line-clamp-2">{project.description}</p>
+        <p className="text-gray-400 text-sm mb-3 line-clamp-2">{project.description}</p>
       )}
 
-      <div className="space-y-4 mt-4">
-        {/* Radar (Tasks) - Special row with 3 states */}
-        <div
+      {/* Compact asset counts in one row */}
+      <div className="flex items-center gap-2 flex-wrap mt-4">
+        {/* Radar (Tasks) - Total count */}
+        <button
           onClick={(e) => handleAssetClick(e, 'radar')}
-          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-blue-500/50 transition-all"
+          title="Radar (Tasks)"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📌</span>
-            <span className="text-sm font-semibold text-gray-300">Radar</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-500">Created</span>
-              <span className="text-lg font-bold text-blue-400">{radar.created}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-500">Progress</span>
-              <span className="text-lg font-bold text-yellow-400">{radar.inProgress}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-500">Done</span>
-              <span className="text-lg font-bold text-green-400">{radar.completed}</span>
-            </div>
-          </div>
-        </div>
+          <span className="text-base">📌</span>
+          <span className="text-sm font-semibold text-blue-400">{radar.created + radar.inProgress + radar.completed}</span>
+        </button>
 
         {/* Neural Notes */}
-        <div
+        <button
           onClick={(e) => handleAssetClick(e, 'neural-notes')}
-          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-purple-500/50 transition-all"
+          title="Neural Notes"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🧠</span>
-            <span className="text-sm font-semibold text-gray-300">Neural Notes</span>
-          </div>
-          <span className="text-lg font-bold text-purple-400">{neuralNotes}</span>
-        </div>
+          <span className="text-base">🧠</span>
+          <span className="text-sm font-semibold text-purple-400">{neuralNotes}</span>
+        </button>
 
         {/* Moments */}
-        <div
+        <button
           onClick={(e) => handleAssetClick(e, 'moments')}
-          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-pink-500/50 transition-all"
+          title="Moments (Photos)"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📸</span>
-            <span className="text-sm font-semibold text-gray-300">Moments</span>
-          </div>
-          <span className="text-lg font-bold text-pink-400">{moments}</span>
-        </div>
+          <span className="text-base">📸</span>
+          <span className="text-sm font-semibold text-pink-400">{moments}</span>
+        </button>
 
         {/* Snaps */}
-        <div
+        <button
           onClick={(e) => handleAssetClick(e, 'snaps')}
-          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-cyan-500/50 transition-all"
+          title="Snaps (Screenshots)"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📎</span>
-            <span className="text-sm font-semibold text-gray-300">Snaps</span>
-          </div>
-          <span className="text-lg font-bold text-cyan-400">{snaps}</span>
-        </div>
+          <span className="text-base">📎</span>
+          <span className="text-sm font-semibold text-cyan-400">{snaps}</span>
+        </button>
 
         {/* Scrolls */}
-        <div
+        <button
           onClick={(e) => handleAssetClick(e, 'scrolls')}
-          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-amber-500/50 transition-all"
+          title="Scrolls (Documents)"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📄</span>
-            <span className="text-sm font-semibold text-gray-300">Scrolls</span>
-          </div>
-          <span className="text-lg font-bold text-amber-400">{scrolls}</span>
-        </div>
+          <span className="text-base">📄</span>
+          <span className="text-sm font-semibold text-amber-400">{scrolls}</span>
+        </button>
       </div>
     </PrismCard>
   )

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import Link from 'next/link'
 
 type Priority = 'SUPERNOVA' | 'STELLAR' | 'NEBULA'
 
@@ -15,6 +16,16 @@ interface ProjectCardProps {
     description?: string
     priority?: Priority
     counts: {
+      radar?: {
+        created: number
+        inProgress: number
+        completed: number
+      }
+      neuralNotes?: number
+      moments?: number
+      snaps?: number
+      scrolls?: number
+      // Legacy support
       tasks?: {
         active: number
         completed: number
@@ -25,10 +36,6 @@ interface ProjectCardProps {
         snippets: number
         documentation: number
       }
-      // Legacy support for old structure
-      active?: number
-      completed?: number
-      deleted?: number
     }
   }
   onPriorityChange?: (projectId: string, newPriority: Priority) => void
@@ -55,21 +62,17 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
   // Local state for immediate UI update
   const [currentPriority, setCurrentPriority] = useState<Priority>(project.priority || 'NEBULA')
 
-  // Support both old and new data structures
-  const taskCounts = project.counts.tasks || {
-    active: project.counts.active || 0,
-    completed: project.counts.completed || 0,
-    deleted: project.counts.deleted || 0
+  // Support both new and old data structures
+  const radar = project.counts.radar || {
+    created: project.counts.tasks?.active || 0,
+    inProgress: 0,
+    completed: project.counts.tasks?.completed || 0
   }
 
-  const referenceCounts = project.counts.references || {
-    total: 0,
-    snippets: 0,
-    documentation: 0
-  }
-
-  const total = taskCounts.active + taskCounts.completed
-  const progress = total > 0 ? (taskCounts.completed / total) * 100 : 0
+  const neuralNotes = project.counts.neuralNotes ?? 0
+  const moments = project.counts.moments ?? 0
+  const snaps = project.counts.snaps ?? 0
+  const scrolls = project.counts.scrolls ?? 0
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -113,10 +116,19 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
     }
   }
 
+  const handleCardClick = () => {
+    router.push(`/projects/${project._id}`)
+  }
+
+  const handleAssetClick = (e: React.MouseEvent, tab: string) => {
+    e.stopPropagation()
+    router.push(`/projects/${project._id}?tab=${tab}`)
+  }
+
   return (
     <PrismCard
-      className="h-full relative"
-      onClick={() => router.push(`/projects/${project._id}`)}
+      className="h-full relative cursor-pointer"
+      onClick={handleCardClick}
     >
       {/* Priority indicator and menu */}
       <div className="absolute top-4 right-4 z-10" ref={menuRef}>
@@ -152,60 +164,81 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
 
       <h3 className="text-xl font-bold text-white mb-2 pr-12">{project.name}</h3>
       {project.description && (
-        <p className="text-gray-400 text-sm mb-4">{project.description}</p>
+        <p className="text-gray-400 text-sm mb-4 line-clamp-2">{project.description}</p>
       )}
-      
-      <div className="space-y-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-400">Progress</span>
-          <span className="text-purple-400">{Math.round(progress)}%</span>
-        </div>
-        
-        <div className="w-full bg-gray-700 rounded-full h-2">
-          <div 
-            className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4 pt-3">
-          {/* Tasks Column */}
-          <div className="border-r border-gray-700 pr-4">
-            <div className="text-sm font-semibold text-gray-400 mb-2">TASKS</div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Active</span>
-                <span className="text-lg font-bold text-blue-400">{taskCounts.active}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Done</span>
-                <span className="text-lg font-bold text-green-400">{taskCounts.completed}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Deleted</span>
-                <span className="text-lg font-bold text-red-400">{taskCounts.deleted}</span>
-              </div>
+
+      <div className="space-y-4 mt-4">
+        {/* Radar (Tasks) - Special row with 3 states */}
+        <div
+          onClick={(e) => handleAssetClick(e, 'radar')}
+          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📌</span>
+            <span className="text-sm font-semibold text-gray-300">Radar</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-500">Created</span>
+              <span className="text-lg font-bold text-blue-400">{radar.created}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-500">Progress</span>
+              <span className="text-lg font-bold text-yellow-400">{radar.inProgress}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-500">Done</span>
+              <span className="text-lg font-bold text-green-400">{radar.completed}</span>
             </div>
           </div>
-          
-          {/* References Column */}
-          <div className="pl-4">
-            <div className="text-sm font-semibold text-gray-400 mb-2">REFERENCES</div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Total</span>
-                <span className="text-lg font-bold text-purple-400">{referenceCounts.total}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Snippets</span>
-                <span className="text-lg font-bold text-cyan-400">{referenceCounts.snippets}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Docs</span>
-                <span className="text-lg font-bold text-amber-400">{referenceCounts.documentation}</span>
-              </div>
-            </div>
+        </div>
+
+        {/* Neural Notes */}
+        <div
+          onClick={(e) => handleAssetClick(e, 'neural-notes')}
+          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🧠</span>
+            <span className="text-sm font-semibold text-gray-300">Neural Notes</span>
           </div>
+          <span className="text-lg font-bold text-purple-400">{neuralNotes}</span>
+        </div>
+
+        {/* Moments */}
+        <div
+          onClick={(e) => handleAssetClick(e, 'moments')}
+          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📸</span>
+            <span className="text-sm font-semibold text-gray-300">Moments</span>
+          </div>
+          <span className="text-lg font-bold text-pink-400">{moments}</span>
+        </div>
+
+        {/* Snaps */}
+        <div
+          onClick={(e) => handleAssetClick(e, 'snaps')}
+          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📎</span>
+            <span className="text-sm font-semibold text-gray-300">Snaps</span>
+          </div>
+          <span className="text-lg font-bold text-cyan-400">{snaps}</span>
+        </div>
+
+        {/* Scrolls */}
+        <div
+          onClick={(e) => handleAssetClick(e, 'scrolls')}
+          className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer border border-gray-700/50 hover:border-purple-500/50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📄</span>
+            <span className="text-sm font-semibold text-gray-300">Scrolls</span>
+          </div>
+          <span className="text-lg font-bold text-amber-400">{scrolls}</span>
         </div>
       </div>
     </PrismCard>

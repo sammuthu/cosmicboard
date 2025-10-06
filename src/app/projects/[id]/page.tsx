@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import useSWR, { mutate } from 'swr'
 import PrismCard from '@/components/PrismCard'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
@@ -9,6 +9,7 @@ import SearchableSelect from '@/components/SearchableSelect'
 import PhotoGallery from '@/components/media/PhotoGallery'
 import ScreenshotCapture from '@/components/media/ScreenshotCapture'
 import DocumentViewer from '@/components/media/DocumentViewer'
+import DateInput from '@/components/DateInput'
 import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText, Trash2, AlertTriangle } from 'lucide-react'
 import PriorityFilter, { PriorityLevel, SortOrder } from '@/components/PriorityFilter'
 import { apiClient, getApiUrl } from '@/lib/api-client'
@@ -75,8 +76,9 @@ type TaskStatus = 'active' | 'completed' | 'deleted'
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const projectId = params?.id as string
-  
+
   const [activeTab, setActiveTab] = useState<TabType>('tasks')
   const [taskTab, setTaskTab] = useState<TaskStatus>('active')
   const [showNewTask, setShowNewTask] = useState(false)
@@ -97,6 +99,15 @@ export default function ProjectDetailPage() {
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
   const [expandedRefs, setExpandedRefs] = useState<Set<string>>(new Set())
   const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  // Edit task modal state
+  const [editingTask, setEditingTask] = useState<any>(null)
+  const [showEditTask, setShowEditTask] = useState(false)
+  const [editTaskTitle, setEditTaskTitle] = useState('')
+  const [editTaskContent, setEditTaskContent] = useState('')
+  const [editTaskPriority, setEditTaskPriority] = useState('STELLAR')
+  const [editTaskDueDate, setEditTaskDueDate] = useState('')
+  const [editTaskTags, setEditTaskTags] = useState('')
   
   const [searchQuery, setSearchQuery] = useState('')
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -182,6 +193,25 @@ export default function ProjectDetailPage() {
       }
     }
   }, [projectId])
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab) {
+      // Map tab names from project card to actual tab values
+      const tabMap: Record<string, TabType> = {
+        'radar': 'tasks',
+        'neural-notes': 'references',
+        'moments': 'photos',
+        'snaps': 'screenshots',
+        'scrolls': 'pdfs'
+      }
+      const mappedTab = tabMap[tab] || tab as TabType
+      if (['tasks', 'references', 'photos', 'screenshots', 'pdfs'].includes(mappedTab)) {
+        setActiveTab(mappedTab)
+      }
+    }
+  }, [searchParams])
 
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return
@@ -271,6 +301,59 @@ export default function ProjectDetailPage() {
       await mutate(`/api/tasks?projectId=${projectId}`)
     } catch (error) {
       console.error('Error updating task:', error)
+    }
+  }
+
+  const openEditTask = (task: any) => {
+    setEditingTask(task)
+    setEditTaskTitle(task.title || task.content)
+    setEditTaskContent(task.content || '')
+    setEditTaskPriority(task.priority || 'STELLAR')
+    setEditTaskDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '')
+    setEditTaskTags(task.tags ? task.tags.join(', ') : '')
+    setShowEditTask(true)
+  }
+
+  const handleUpdateTask = async () => {
+    if (!editingTask || !editTaskTitle.trim()) return
+
+    try {
+      const updateData = {
+        title: editTaskTitle,
+        content: editTaskContent,
+        priority: editTaskPriority,
+        dueDate: editTaskDueDate || null,
+        tags: editTaskTags.split(',').map(tag => tag.trim()).filter(Boolean),
+      }
+
+      console.log('Updating task with data:', updateData)
+
+      await apiClient.put(`/projects/${projectId}/tasks/${editingTask._id || editingTask.id}`, updateData)
+
+      // Force revalidation of tasks data
+      await mutate(`/api/tasks?projectId=${projectId}`, undefined, { revalidate: true })
+
+      setShowEditTask(false)
+      setEditingTask(null)
+      toast.success('Task updated successfully')
+    } catch (error) {
+      console.error('Error updating task:', error)
+      toast.error('Failed to update task')
+    }
+  }
+
+  const handleDeleteTask = async () => {
+    if (!editingTask) return
+
+    try {
+      await apiClient.delete(`/tasks/${editingTask._id || editingTask.id}/delete`)
+      await mutate(`/api/tasks?projectId=${projectId}`)
+      setShowEditTask(false)
+      setEditingTask(null)
+      toast.success('Task moved to trash')
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error('Failed to delete task')
     }
   }
 
@@ -446,10 +529,14 @@ export default function ProjectDetailPage() {
     (activeTab === 'tasks' ? filteredTasks.length : filteredReferences.length) / itemsPerPage
   )
 
-  const cosmicPriorities = {
-    HIGH: { name: 'Supernova', emoji: '💥' },
+  const cosmicPriorities: Record<string, { name: string; emoji: string }> = {
+    SUPERNOVA: { name: 'SuperNova', emoji: '🌟' },
+    STELLAR: { name: 'Stellar', emoji: '⭐' },
+    NEBULA: { name: 'Nebula', emoji: '☁️' },
+    // Legacy support
+    HIGH: { name: 'SuperNova', emoji: '🌟' },
     MEDIUM: { name: 'Stellar', emoji: '⭐' },
-    LOW: { name: 'Nebula', emoji: '🌌' }
+    LOW: { name: 'Nebula', emoji: '☁️' }
   }
 
   const projectPriorityEmojis: Record<string, string> = {
@@ -609,7 +696,7 @@ export default function ProjectDetailPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search tasks and references..."
+              placeholder="Search across this project..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
@@ -772,22 +859,27 @@ export default function ProjectDetailPage() {
                   onChange={(e) => setNewTaskContent(e.target.value)}
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white mb-4 h-32 resize-none"
                 />
-                <div className="flex gap-4 mb-4">
-                  <select
-                    value={newTaskPriority}
-                    onChange={(e) => setNewTaskPriority(e.target.value)}
-                    className="p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                  >
-                    <option value="LOW">🌌 Nebula (Low)</option>
-                    <option value="MEDIUM">⭐ Stellar (Medium)</option>
-                    <option value="HIGH">💥 Supernova (High)</option>
-                  </select>
-                  <input
-                    type="date"
-                    value={newTaskDueDate}
-                    onChange={(e) => setNewTaskDueDate(e.target.value)}
-                    className="p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                  />
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+                    <select
+                      value={newTaskPriority}
+                      onChange={(e) => setNewTaskPriority(e.target.value)}
+                      className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                    >
+                      <option value="LOW">🌌 Nebula (Low)</option>
+                      <option value="MEDIUM">⭐ Stellar (Medium)</option>
+                      <option value="HIGH">💥 Supernova (High)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
+                    <DateInput
+                      value={newTaskDueDate}
+                      onChange={setNewTaskDueDate}
+                      placeholder="MM/DD/YYYY"
+                    />
+                  </div>
                 </div>
                 <input
                   type="text"
@@ -813,6 +905,103 @@ export default function ProjectDetailPage() {
               </PrismCard>
             )}
 
+            {/* Edit Task Modal */}
+            {showEditTask && editingTask && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <PrismCard className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-white">Edit Task</h3>
+                    <button
+                      onClick={() => setShowEditTask(false)}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                      <input
+                        type="text"
+                        placeholder="Task Title"
+                        value={editTaskTitle}
+                        onChange={(e) => setEditTaskTitle(e.target.value)}
+                        className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                      <textarea
+                        placeholder="Task description..."
+                        value={editTaskContent}
+                        onChange={(e) => setEditTaskContent(e.target.value)}
+                        className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white h-32 resize-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+                        <select
+                          value={editTaskPriority}
+                          onChange={(e) => setEditTaskPriority(e.target.value)}
+                          className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                        >
+                          <option value="NEBULA">☁️ Nebula</option>
+                          <option value="STELLAR">⭐ Stellar</option>
+                          <option value="SUPERNOVA">🌟 SuperNova</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
+                        <DateInput
+                          value={editTaskDueDate}
+                          onChange={setEditTaskDueDate}
+                          placeholder="MM/DD/YYYY"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Tags</label>
+                      <input
+                        type="text"
+                        placeholder="Tags (comma separated, e.g., urgent, backend, api)"
+                        value={editTaskTags}
+                        onChange={(e) => setEditTaskTags(e.target.value)}
+                        className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-4">
+                      <button
+                        onClick={handleUpdateTask}
+                        className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={handleDeleteTask}
+                        className="px-6 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30"
+                      >
+                        <Trash2 className="w-4 h-4 inline mr-2" />
+                        Delete Task
+                      </button>
+                      <button
+                        onClick={() => setShowEditTask(false)}
+                        className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 ml-auto"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </PrismCard>
+              </div>
+            )}
+
             {/* Tasks List */}
             <div className="space-y-2">
               {paginatedTasks.map((task: any) => (
@@ -826,11 +1015,14 @@ export default function ProjectDetailPage() {
                       )}
                       <h3 className="text-lg font-semibold text-white">{task.title}</h3>
                       <span className={`text-sm ${getPriorityColor(task.priority)}`}>
-                        {cosmicPriorities[task.priority].emoji} {cosmicPriorities[task.priority].name}
+                        {cosmicPriorities[task.priority]?.emoji || '⭐'} {cosmicPriorities[task.priority]?.name || task.priority}
                       </span>
                       {task.dueDate && (
                         <span className="text-sm text-gray-400">
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
+                          Due: {(() => {
+                            const [year, month, day] = task.dueDate.split('T')[0].split('-')
+                            return `${month}/${day}/${year}`
+                          })()}
                         </span>
                       )}
                       {task.tags && task.tags.length > 0 && (
@@ -862,6 +1054,15 @@ export default function ProjectDetailPage() {
                       </button>
                       {taskTab === 'active' && (
                         <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openEditTask(task)
+                            }}
+                            className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 text-sm"
+                          >
+                            Edit
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -920,31 +1121,31 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* References Tab Content */}
+        {/* Neural Notes Tab Content */}
         {activeTab === 'references' && (
           <div>
             {/* Tab Description */}
             <div className="mb-6 text-white/60 text-sm italic border-l-2 border-purple-500/50 pl-4">
               Prompts, code snippets, links, ideas — your digital brain dump for everything creative and chaotic 🤯
             </div>
-            {/* Add Reference Button */}
+            {/* Add Neural Note Button */}
             <button
               onClick={() => setShowNewReference(true)}
               className="group relative mb-6 px-6 py-3"
             >
               <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-lg opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
               <div className="relative px-6 py-3 bg-black rounded-lg text-white font-semibold">
-                + Add New Reference
+                + Add New Neural Note
               </div>
             </button>
 
-            {/* New Reference Form */}
+            {/* New Neural Note Form */}
             {showNewReference && (
               <PrismCard className="mb-6">
-                <h3 className="text-xl font-semibold mb-4 text-white">Create New Reference</h3>
+                <h3 className="text-xl font-semibold mb-4 text-white">Create New Neural Note</h3>
                 <input
                   type="text"
-                  placeholder="Reference Title"
+                  placeholder="Neural Note Title"
                   value={newRefTitle}
                   onChange={(e) => setNewRefTitle(e.target.value)}
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white mb-4"
@@ -998,7 +1199,7 @@ export default function ProjectDetailPage() {
                     onClick={handleCreateReference}
                     className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90"
                   >
-                    Create Reference
+                    Create Neural Note
                   </button>
                   <button
                     onClick={() => setShowNewReference(false)}
@@ -1010,7 +1211,7 @@ export default function ProjectDetailPage() {
               </PrismCard>
             )}
 
-            {/* References List */}
+            {/* Neural Notes List */}
             <div className="space-y-2">
               {paginatedReferences.map((ref: any) => (
                 <PrismCard key={ref._id} className="overflow-hidden">
@@ -1025,8 +1226,8 @@ export default function ProjectDetailPage() {
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(ref.category)}`}>
                         {ref.category}
                       </span>
-                      <span className={`text-sm ${getPriorityColor(ref.priority || 'MEDIUM')}`}>
-                        {cosmicPriorities[ref.priority || 'MEDIUM'].emoji} {cosmicPriorities[ref.priority || 'MEDIUM'].name}
+                      <span className={`text-sm ${getPriorityColor(ref.priority || 'STELLAR')}`}>
+                        {cosmicPriorities[ref.priority || 'STELLAR']?.emoji || '⭐'} {cosmicPriorities[ref.priority || 'STELLAR']?.name || ref.priority}
                       </span>
                       {ref.tags && ref.tags.length > 0 && (
                         <div className="flex gap-1">

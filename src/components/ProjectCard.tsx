@@ -127,7 +127,7 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
 
   return (
     <PrismCard
-      className="h-full relative cursor-pointer"
+      className="relative cursor-pointer transition-all duration-300 ease-in-out group hover:scale-105 hover:z-20"
       onClick={handleCardClick}
     >
       {/* Priority indicator and menu */}
@@ -162,10 +162,17 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
         )}
       </div>
 
-      <h3 className="text-xl font-bold text-white mb-2 pr-12">{project.name}</h3>
-      {project.description && (
-        <p className="text-gray-400 text-sm mb-3 line-clamp-2">{project.description}</p>
-      )}
+      {/* Title - always one line with ellipsis, expands on hover */}
+      <h3 className="text-xl font-bold text-white mb-2 pr-12 line-clamp-1 group-hover:line-clamp-none transition-all duration-300">
+        {project.name}
+      </h3>
+
+      {/* Description - always reserves space, one line by default, expands on hover */}
+      <div className="min-h-[20px] mb-3">
+        <p className="text-gray-400 text-sm line-clamp-1 group-hover:line-clamp-none transition-all duration-300">
+          {project.description || '\u00A0'}
+        </p>
+      </div>
 
       {/* Compact asset counts in one row */}
       <div className="flex items-center gap-2 flex-wrap mt-4">

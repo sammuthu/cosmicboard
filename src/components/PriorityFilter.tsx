@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { ChevronDown, Zap, Star, Cloud, Filter } from 'lucide-react'
 
 export type PriorityLevel = 'all' | 'SUPERNOVA' | 'STELLAR' | 'NEBULA'
-export type SortOrder = 'priority-high' | 'priority-low' | 'date-new' | 'date-old'
+export type SortOrder = 'date-new' | 'date-old'
 
 interface PriorityFilterProps {
   onPriorityChange?: (priority: PriorityLevel) => void
@@ -21,8 +21,6 @@ const priorityOptions = [
 ]
 
 const sortOptions = [
-  { value: 'priority-high' as SortOrder, label: 'Highest Priority First' },
-  { value: 'priority-low' as SortOrder, label: 'Lowest Priority First' },
   { value: 'date-new' as SortOrder, label: 'Newest First' },
   { value: 'date-old' as SortOrder, label: 'Oldest First' }
 ]
@@ -31,7 +29,7 @@ export default function PriorityFilter({
   onPriorityChange,
   onSortChange,
   currentPriority = 'all',
-  currentSort = 'priority-high'
+  currentSort = 'date-new'
 }: PriorityFilterProps) {
   const [showPriorityMenu, setShowPriorityMenu] = useState(false)
   const [showSortMenu, setShowSortMenu] = useState(false)

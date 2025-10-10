@@ -16,7 +16,7 @@ export default function CosmicBoard() {
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<Priority>('ALL')
-  const [sortByPriority, setSortByPriority] = useState(false)
+  const [sortOrder, setSortOrder] = useState<'date-new' | 'date-old'>('date-new')
 
   const fetchProjects = async () => {
     try {
@@ -60,7 +60,7 @@ export default function CosmicBoard() {
     console.log('=== Filtering Projects ===')
     console.log('Total projects:', projects.length)
     console.log('Priority filter:', priorityFilter)
-    console.log('Sort by priority:', sortByPriority)
+    console.log('Sort order:', sortOrder)
     console.log('Projects data:', projects.map((p: any) => ({ id: p._id, name: p.name, priority: p.priority })))
 
     const filtered = projects.filter((project: any) => {
@@ -72,17 +72,15 @@ export default function CosmicBoard() {
 
     console.log('Filtered count:', filtered.length)
 
-    const sorted = filtered.sort((a: any, b: any) => {
-      if (!sortByPriority) return 0
-      const priorityOrder = { SUPERNOVA: 0, STELLAR: 1, NEBULA: 2 }
-      const aPriority = a.priority || 'NEBULA'
-      const bPriority = b.priority || 'NEBULA'
-      return priorityOrder[aPriority] - priorityOrder[bPriority]
+    const sorted = [...filtered].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.updatedAt).getTime()
+      const bDate = new Date(b.createdAt || b.updatedAt).getTime()
+      return sortOrder === 'date-new' ? bDate - aDate : aDate - bDate
     })
 
-    console.log('Final sorted projects:', sorted.map((p: any) => ({ name: p.name, priority: p.priority })))
+    console.log('Final sorted projects:', sorted.map((p: any) => ({ name: p.name, priority: p.priority, date: p.createdAt })))
     return sorted
-  }, [projects, priorityFilter, sortByPriority])
+  }, [projects, priorityFilter, sortOrder])
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -248,17 +246,29 @@ export default function CosmicBoard() {
                 </button>
                 <button
                   onClick={() => {
-                    console.log('🔘 Toggled sort by priority:', !sortByPriority)
-                    setSortByPriority(!sortByPriority)
+                    console.log('🔘 Sort by newest first')
+                    setSortOrder('date-new')
                   }}
-                  className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                    sortByPriority
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    sortOrder === 'date-new'
                       ? 'bg-purple-500/30 text-purple-300 border border-purple-500'
                       : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
                   }`}
                 >
-                  <Filter className="w-4 h-4" />
-                  Highest Priority First
+                  Newest First
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('🔘 Sort by oldest first')
+                    setSortOrder('date-old')
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    sortOrder === 'date-old'
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500'
+                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
+                  }`}
+                >
+                  Oldest First
                 </button>
               </div>
 

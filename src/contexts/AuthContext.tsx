@@ -47,20 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     setLoading(true);
     try {
-      // In development mode, always use the seeded auth (matching mobile approach)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔧 Development mode: setting up auth for nmuthu@gmail.com...');
-        const devAuthResult = await authService.setupDevelopmentAuth();
-        if (devAuthResult.success && devAuthResult.user) {
-          console.log('✅ Development authentication configured');
-          setUser(devAuthResult.user);
-          setIsAuthenticated(true);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Production mode: check normal authentication
+      // Check normal authentication (works for both dev and production)
       if (authService.isAuthenticated()) {
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {

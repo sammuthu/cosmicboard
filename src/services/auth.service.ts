@@ -34,36 +34,8 @@ class AuthService {
     }
   }
 
-  private setupDevelopmentAuthSync() {
-    // Use the same seeded token as mobile (this token is seeded in the database)
-    const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
-    this.accessToken = devToken;
-    this.refreshToken = devToken;
-    this.tokenExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-
-    // Save to localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('auth_tokens', JSON.stringify({
-        accessToken: this.accessToken,
-        refreshToken: this.refreshToken,
-        expiry: this.tokenExpiry.toISOString()
-      }));
-
-      // Set user if not exists
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        const mockUser = {
-          id: 'dev-user-nmuthu',
-          email: 'nmuthu@gmail.com',
-          name: 'Development User',
-        };
-        localStorage.setItem('user', JSON.stringify(mockUser));
-      }
-    }
-
-    // Set axios default header
-    axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
-  }
+  // REMOVED: setupDevelopmentAuthSync() - no longer needed
+  // Use magic link authentication or manual localStorage setup for development testing
 
   private loadTokens() {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -265,61 +237,8 @@ class AuthService {
     return stored ? JSON.parse(stored) : null;
   }
 
-  async setupDevelopmentAuth(email: string = 'nmuthu@gmail.com'): Promise<{ success: boolean; user?: User; message?: string }> {
-    // In development, use the seeded token from database (matching mobile approach)
-    console.log('🔧 Setting up development auth for nmuthu@gmail.com...');
-
-    // Use the same token that's seeded in the database
-    const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
-
-    this.accessToken = devToken;
-    this.refreshToken = devToken;
-    this.tokenExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
-
-    // Save tokens to localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('auth_tokens', JSON.stringify({
-        accessToken: this.accessToken,
-        refreshToken: this.refreshToken,
-        expiry: this.tokenExpiry.toISOString()
-      }));
-    }
-
-    // Set axios default header
-    axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
-
-    // Fetch actual user data from API (includes avatar and other fields)
-    try {
-      const currentUser = await this.getCurrentUser();
-      if (currentUser) {
-        console.log('✅ Development auth configured successfully');
-        console.log('👤 User:', currentUser.email, currentUser.avatar ? '(with avatar)' : '(no avatar)');
-
-        return {
-          success: true,
-          user: currentUser,
-        };
-      }
-    } catch (error) {
-      console.error('Failed to fetch user from API, using mock data:', error);
-    }
-
-    // Fallback to mock user if API fails
-    const devUser = {
-      id: 'dev-user-nmuthu',
-      email: 'nmuthu@gmail.com',
-      name: 'Development User',
-    };
-
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('user', JSON.stringify(devUser));
-    }
-
-    return {
-      success: true,
-      user: devUser,
-    };
-  }
+  // REMOVED: setupDevelopmentAuth() - replaced with proper magic link flow
+  // For development testing: use magic link from backend console logs or manual localStorage setup
 }
 
 export default new AuthService();

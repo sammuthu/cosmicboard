@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
         port: '7779',
         pathname: '/uploads/**',
       },
+      // LocalStack S3 (for development)
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '4566',
+        pathname: '/cosmicspace-media/**',
+      },
     ],
   },
   async redirects() {

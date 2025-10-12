@@ -26,10 +26,11 @@ class AuthService {
     // Load tokens from localStorage on init (only in browser)
     if (typeof window !== 'undefined') {
       this.loadTokens();
+      // DISABLED: Auto-login (to allow testing with multiple accounts)
       // In development, ensure tokens are always available
-      if (process.env.NODE_ENV === 'development' && !this.accessToken) {
-        this.setupDevelopmentAuthSync();
-      }
+      // if (process.env.NODE_ENV === 'development' && !this.accessToken) {
+      //   this.setupDevelopmentAuthSync();
+      // }
     }
   }
 
@@ -66,35 +67,35 @@ class AuthService {
 
   private loadTokens() {
     if (typeof window !== 'undefined' && window.localStorage) {
-      // In development, use the seeded token (matching mobile approach)
-      if (process.env.NODE_ENV === 'development') {
-        const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
-        this.accessToken = devToken;
-        this.refreshToken = devToken;
-        this.tokenExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
+      // DISABLED: Auto-login in development (to allow testing with multiple accounts)
+      // if (process.env.NODE_ENV === 'development') {
+      //   const devToken = 'acf42bf1db704dd18e3c64e20f1e73da2f19f8c23cf3bdb7e23c9c2a3c5f1e2d';
+      //   this.accessToken = devToken;
+      //   this.refreshToken = devToken;
+      //   this.tokenExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
 
-        // Save tokens to localStorage for persistence
-        localStorage.setItem('auth_tokens', JSON.stringify({
-          accessToken: this.accessToken,
-          refreshToken: this.refreshToken,
-          expiry: this.tokenExpiry.toISOString()
-        }));
+      //   // Save tokens to localStorage for persistence
+      //   localStorage.setItem('auth_tokens', JSON.stringify({
+      //     accessToken: this.accessToken,
+      //     refreshToken: this.refreshToken,
+      //     expiry: this.tokenExpiry.toISOString()
+      //   }));
 
-        // Store mock user if not exists
-        const storedUser = localStorage.getItem('user');
-        if (!storedUser) {
-          const mockUser = {
-            id: 'dev-user-nmuthu',
-            email: 'nmuthu@gmail.com',
-            name: 'Development User',
-          };
-          localStorage.setItem('user', JSON.stringify(mockUser));
-        }
+      //   // Store mock user if not exists
+      //   const storedUser = localStorage.getItem('user');
+      //   if (!storedUser) {
+      //     const mockUser = {
+      //       id: 'dev-user-nmuthu',
+      //       email: 'nmuthu@gmail.com',
+      //       name: 'Development User',
+      //     };
+      //     localStorage.setItem('user', JSON.stringify(mockUser));
+      //   }
 
-        // Set axios default header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
-        return;
-      }
+      //   // Set axios default header
+      //   axios.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+      //   return;
+      // }
 
       const stored = localStorage.getItem('auth_tokens');
       if (stored) {

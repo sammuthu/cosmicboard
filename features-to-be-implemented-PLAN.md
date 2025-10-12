@@ -499,6 +499,36 @@ Phase 6 (Global Scale)
 
 ---
 
+## ⚡ PRIORITY: Social Platform Transformation
+
+**NEW MAJOR INITIATIVE** - Transform CosmicBoard into a social productivity platform.
+
+📄 **See detailed plan:** `SOCIAL-PLATFORM-TRANSFORMATION.md`
+
+### Overview
+- Add public/contacts/private visibility to all content
+- Implement Discover feed for public content
+- Add engagement features (likes, comments, amplify/repost, bookmarks)
+- Create user network (contacts, following)
+- Add Events entity with task-event relationships
+- Redesign navigation: "Projects" → "Home" with top tabs (Discover | My Space | Following)
+
+### Timeline
+- **24 weeks (6 months)** across 9 incremental phases (S1-S9)
+- Starts immediately after current Phase 1 features
+- Each phase delivers working functionality on both web and mobile
+
+### Key Phases
+1. **S1-S2 (4 weeks):** Database + Navigation redesign
+2. **S3 (2 weeks):** Privacy controls (public/contacts/private)
+3. **S4 (3 weeks):** Discover feed
+4. **S5 (4 weeks):** Engagement (likes, comments)
+5. **S6-S9 (11 weeks):** Amplify, network, events, polish
+
+**Status:** 📋 PLANNED - Awaiting approval to begin S1
+
+---
+
 ## Appendix: Feature Status
 
 ### ✅ Completed Features (Current State)
@@ -507,6 +537,9 @@ Phase 6 (Global Scale)
 3. Organize and search content efficiently (basic search implemented)
 4. Dark mode and theme customization (8+ cosmic themes with animations)
 5. Tagging and filtering (basic - needs enhancement)
+6. Platform-specific app icons (iOS, Android, Web)
+7. Uniform project cards with expanding hover effect
+8. Priority filtering and date sorting
 
 ### 🚧 In Progress
 - Enhanced date input with calendar picker (just completed)
@@ -514,6 +547,9 @@ Phase 6 (Global Scale)
 
 ### 📋 Planned (23 original features → 18 remaining)
 All features outlined in Phases 1-6 above.
+
+### 🚀 NEW: Social Platform Features (See SOCIAL-PLATFORM-TRANSFORMATION.md)
+9 phases of social features to transform CosmicBoard into a productivity-focused social network.
 
 ---
 

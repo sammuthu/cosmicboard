@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { Plus, Trash2, Archive, Search, Command, Download, Upload, RotateCcw, FolderOpen } from 'lucide-react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { Plus, Trash2, Archive, Search, Command, Download, Upload, RotateCcw, FolderOpen, Globe, User, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import PriorityFilter, { PriorityLevel, SortOrder } from '@/components/PriorityFilter'
 import ProjectCard from '@/components/ProjectCard'
@@ -13,8 +13,13 @@ import { useTheme } from '@/contexts/ThemeContext'
 import UserAvatar from '@/components/UserAvatar'
 import NetworkSidebar from '@/components/NetworkSidebar'
 import { setActiveTheme, getThemeTemplates } from '@/lib/api/themes'
+import { useDiscoverFeed } from '@/hooks/useDiscoverFeed'
+import DiscoverContentCard from '@/components/discover/DiscoverContentCard'
+
+type HomeTab = 'discover' | 'myspace'
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<HomeTab>('myspace')
   const [selectedTheme, setSelectedTheme] = useState<string>('sun')
   const [isAutoPlaying, setIsAutoPlaying] = useState(false)
   const [projects, setProjects] = useState([])
@@ -35,6 +40,12 @@ export default function Home() {
   const router = useRouter()
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth()
   const { activeTheme, refreshTheme } = useTheme()
+
+  // Discover feed hook
+  const { items: discoverItems, loading: discoverLoading, hasMore, error: discoverError, fetchMore, refresh: refreshDiscover } = useDiscoverFeed({ limit: 20 })
+
+  // Infinite scroll observer
+  const loadMoreRef = useRef<HTMLDivElement>(null)
   
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -302,6 +313,31 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // Infinite scroll for discover feed
+  useEffect(() => {
+    if (activeTab !== 'discover') return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !discoverLoading) {
+          fetchMore()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    const currentRef = loadMoreRef.current
+    if (currentRef) {
+      observer.observe(currentRef)
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef)
+      }
+    }
+  }, [activeTab, hasMore, discoverLoading, fetchMore])
+
   const handleExport = async () => {
     try {
       const { getApiUrl } = await import('@/lib/api-client')
@@ -452,7 +488,55 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Feature Buttons Container */}
+      {/* Tab Navigation */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 relative z-10">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-cyan-500/50 rounded-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur"></div>
+          <div className="relative rounded-2xl shadow-2xl backdrop-blur-sm overflow-hidden" style={{
+            background: `linear-gradient(135deg, var(--theme-card-bg-from), var(--theme-card-bg-via), var(--theme-card-bg-to))`,
+            borderColor: 'var(--theme-card-border)',
+            borderWidth: '1px',
+            borderStyle: 'solid'
+          }}>
+            <div className="grid grid-cols-2">
+              {/* Discover Tab */}
+              <button
+                onClick={() => setActiveTab('discover')}
+                className={`relative flex flex-col items-center justify-center gap-2 p-6 transition-all duration-300 border-r border-white/10 ${
+                  activeTab === 'discover'
+                    ? 'bg-purple-500/20 text-purple-300'
+                    : 'text-gray-400 hover:bg-purple-500/10 hover:text-purple-300'
+                }`}
+              >
+                <Globe className="w-6 h-6" />
+                <span className="text-sm font-medium">Discover</span>
+                {activeTab === 'discover' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
+                )}
+              </button>
+
+              {/* My Space Tab */}
+              <button
+                onClick={() => setActiveTab('myspace')}
+                className={`relative flex flex-col items-center justify-center gap-2 p-6 transition-all duration-300 ${
+                  activeTab === 'myspace'
+                    ? 'bg-cyan-500/20 text-cyan-300'
+                    : 'text-gray-400 hover:bg-cyan-500/10 hover:text-cyan-300'
+                }`}
+              >
+                <User className="w-6 h-6" />
+                <span className="text-sm font-medium">My Space</span>
+                {activeTab === 'myspace' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 to-blue-400"></div>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Feature Buttons Container - Only show on My Space tab */}
+      {activeTab === 'myspace' && (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 relative z-10">
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-cyan-500/50 rounded-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur"></div>
@@ -498,11 +582,13 @@ export default function Home() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Network Sidebar */}
       <NetworkSidebar isOpen={showNetworkSidebar} onClose={() => setShowNetworkSidebar(false)} />
 
-      {/* Main Content */}
+      {/* Main Content - My Space */}
+      {activeTab === 'myspace' && (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 relative z-10">
         {/* Priority Filter */}
         <PriorityFilter
@@ -606,6 +692,116 @@ export default function Home() {
           )}
         </div>
       </div>
+      )}
+
+      {/* Main Content - Discover */}
+      {activeTab === 'discover' && (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 relative z-10">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">Discover Public Content</h2>
+            <button
+              onClick={refreshDiscover}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="text-sm font-medium">Refresh</span>
+            </button>
+          </div>
+
+          {/* Error state */}
+          {discoverError && (
+            <PrismCard className="mb-6">
+              <div className="text-center py-8">
+                <p className="text-red-400 mb-4">{discoverError}</p>
+                <button
+                  onClick={refreshDiscover}
+                  className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 rounded-lg transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </PrismCard>
+          )}
+
+          {/* Loading initial content */}
+          {discoverLoading && discoverItems.length === 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map(i => (
+                <PrismCard key={i}>
+                  <div className="animate-pulse">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-gray-700 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-700 rounded w-1/3 mb-2"></div>
+                        <div className="h-3 bg-gray-700 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                    <div className="h-6 bg-gray-700 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-700 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+                  </div>
+                </PrismCard>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!discoverLoading && discoverItems.length === 0 && !discoverError && (
+            <PrismCard>
+              <div className="text-center py-12">
+                <Globe className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-400 mb-2">No public content yet</h3>
+                <p className="text-gray-500">
+                  Be the first to share your projects with the community!
+                </p>
+              </div>
+            </PrismCard>
+          )}
+
+          {/* Feed items */}
+          {discoverItems.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {discoverItems.map((item) => (
+                <DiscoverContentCard
+                  key={item.id}
+                  contentType={item.contentType}
+                  owner={item.owner}
+                  content={item.content}
+                  engagement={item.engagement}
+                  createdAt={item.createdAt}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Load more indicator */}
+          {hasMore && (
+            <div ref={loadMoreRef} className="mt-8 flex justify-center">
+              <div className="flex items-center gap-3 text-gray-400">
+                {discoverLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-400"></div>
+                    <span>Loading more content...</span>
+                  </>
+                ) : (
+                  <span>Scroll for more</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* End of feed message */}
+          {!hasMore && discoverItems.length > 0 && (
+            <div className="mt-8 text-center">
+              <p className="text-gray-500 text-sm">
+                You've reached the end of the discover feed
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+      )}
 
       {/* New Project Modal */}
       {showNewProject && (

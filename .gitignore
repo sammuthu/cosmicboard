@@ -30,8 +30,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# Keep environment variables out of version control
+# CRITICAL: NEVER commit ANY .env files (see global CLAUDE.md for incident history)
+# Incident: October 13, 2025 - .env.localstack was committed in backend with credentials
 .env*
+
+# Exception: Allow .env.example (template with placeholders only)
+!.env.example
+!.env.*.example
 
 # vercel
 .vercel

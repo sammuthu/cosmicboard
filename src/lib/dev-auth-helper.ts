@@ -8,9 +8,10 @@
  */
 
 // Development tokens (generated via backend /setup-dev-auth endpoint)
+// Last refreshed: 2025-10-12
 const DEV_TOKENS = {
   'nmuthu@gmail.com': {
-    token: '63c1a0e1755fe9feba1a81d6b21fb181588577157eb14f0c98b380c679bbc916',
+    token: '26e73e915deb882011bb16ff9fec49d3cd8dcce2c525a09bd18fefa9eedfa076',
     user: {
       id: '6b0a6f4f-002f-40cb-babe-95908a565f45',
       email: 'nmuthu@gmail.com',
@@ -18,7 +19,7 @@ const DEV_TOKENS = {
     }
   },
   'sammuthu@me.com': {
-    token: 'b0d2f26f3cfff9169fd3b828177a2ce7f164dd0bbd3e81791f169e9694d70fd4',
+    token: '27eb1a24abf6c89fc5ad1d60c0cb1038ef5e69a4bc64f6eb7dd5f81019ee25a2',
     user: {
       id: 'c7e7967b-a27d-4932-82af-71dd4cadcb80',
       email: 'sammuthu@me.com',

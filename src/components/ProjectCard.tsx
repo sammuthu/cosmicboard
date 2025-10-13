@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
+import VisibilityDropdown, { VisibilityOption } from './VisibilityDropdown'
 
 type Priority = 'SUPERNOVA' | 'STELLAR' | 'NEBULA'
 
@@ -15,6 +16,7 @@ interface ProjectCardProps {
     name: string
     description?: string
     priority?: Priority
+    visibility?: VisibilityOption
     counts: {
       radar?: {
         created: number
@@ -61,6 +63,7 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
 
   // Local state for immediate UI update
   const [currentPriority, setCurrentPriority] = useState<Priority>(project.priority || 'NEBULA')
+  const [currentVisibility, setCurrentVisibility] = useState<VisibilityOption>(project.visibility || 'PRIVATE')
 
   // Support both new and old data structures
   const radar = project.counts.radar || {
@@ -116,6 +119,23 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
     }
   }
 
+  const handleVisibilityChange = async (newVisibility: VisibilityOption) => {
+    const oldVisibility = currentVisibility
+
+    // Immediately update the UI (optimistic update)
+    setCurrentVisibility(newVisibility)
+
+    try {
+      await apiClient.put(`/projects/${project._id}`, { visibility: newVisibility })
+      toast.success(`Visibility updated to ${newVisibility.toLowerCase()}`)
+    } catch (error) {
+      console.error('Error updating visibility:', error)
+      toast.error('Failed to update visibility')
+      // Rollback on error
+      setCurrentVisibility(oldVisibility)
+    }
+  }
+
   const handleCardClick = () => {
     router.push(`/projects/${project._id}`)
   }
@@ -166,6 +186,16 @@ export default function ProjectCard({ project, onPriorityChange }: ProjectCardPr
       <h3 className="text-xl font-bold text-white mb-2 pr-12 line-clamp-1 group-hover:line-clamp-none transition-all duration-300">
         {project.name}
       </h3>
+
+      {/* Visibility Dropdown */}
+      <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+        <VisibilityDropdown
+          value={currentVisibility}
+          onChange={handleVisibilityChange}
+          size="sm"
+          showLabel={true}
+        />
+      </div>
 
       {/* Description - always reserves space, one line by default, expands on hover */}
       <div className="min-h-[20px] mb-3">

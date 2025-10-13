@@ -199,14 +199,71 @@ The external backend provides RESTful endpoints:
    - Network sidebar for connections
    - Invite system
 
+## Shared Projects & Visibility System
+
+### Visibility Levels
+Projects support three visibility levels controlled via the VisibilityDropdown component:
+- **PRIVATE** (🔒): Only the owner can view
+- **CONTACTS** (👥): Owner and their contacts (coming soon)
+- **PUBLIC** (🌍): Everyone can view
+
+### Implementation
+1. **Frontend Components**:
+   - `/src/components/VisibilityDropdown.tsx` - Reusable dropdown for quick visibility changes
+   - Used in ProjectCard (list view) and project details page header
+   - Optimistic updates with error rollback
+
+2. **Backend Access Control**:
+   - `GET /api/projects/:id` - Allows viewing public projects by any authenticated user
+   - `GET /api/projects/:projectId/tasks` - Respects project visibility for task access
+   - Returns `isOwner: boolean` to indicate if viewer is the owner
+   - Returns 403 Forbidden for private projects accessed by non-owners
+
+3. **Discover Feed**:
+   - `/api/discover` - Shows public content from all users (excluding viewer's own content)
+   - Uses ContentVisibility table for efficient querying
+   - Supports infinite scroll with cursor-based pagination
+   - Click on PROJECT cards navigates to read-only view for non-owners
+
+4. **ContentVisibility Sync**:
+   - All visibility changes automatically sync to ContentVisibility table
+   - Ensures discover feed stays up-to-date with project visibility
+   - Implemented in `/Users/sammuthu/Projects/cosmicboard-backend/src/routes/projects.ts`
+
+### Current Capabilities (Read-Only Sharing)
+✅ **Implemented**:
+- View public projects and their details
+- View tasks within public projects
+- Project cards in discover feed are clickable
+- Access control enforced at API level
+
+### Future Operations (To Be Implemented)
+🔜 **Planned Features**:
+- **Comment on shared projects**: Add comments/feedback on public projects
+- **Amplify/Like**: Show appreciation for shared content
+- **Bookmark**: Save public projects to personal collection
+- **Fork/Clone**: Create personal copy of public project structure
+- **Suggest edits**: Propose changes to public projects (owner approval)
+- **Subscribe**: Get notifications when public project is updated
+- **Share metrics**: View engagement stats (views, likes, comments) on your public projects
+- **Collaboration**: Invite specific users to co-edit (beyond public visibility)
+- **CONTACTS visibility**: Share with your contact list only
+
+### Technical Notes
+- Visibility changes trigger upsertContentVisibility() to sync changes
+- Frontend uses optimistic updates for instant feedback
+- Backend enforces permissions on all project-related endpoints
+- Non-owners see read-only view (no edit/delete actions)
+
 ## Data Models (managed by backend)
 
-- **Project**: id, name, description, priority (SUPERNOVA/STELLAR/NEBULA), metadata, timestamps
+- **Project**: id, name, description, priority (SUPERNOVA/STELLAR/NEBULA), visibility (PUBLIC/CONTACTS/PRIVATE), metadata, timestamps
 - **Task**: id, projectId, priority, status, content, metadata, timestamps
 - **Reference**: id, projectId, title, url, description, category, tags, metadata, timestamps
 - **Media**: id, projectId, type (photo/screenshot/pdf), name, url, thumbnailUrl, size, mimeType, metadata, timestamps
 - **User**: id, email, name, username, avatar, bio, deviceId, timestamps
 - **Theme**: id, userId, themeId, isGlobal, deviceType, customizations, timestamps
+- **ContentVisibility**: id, contentType, contentId, visibility, ownerId, timestamps - Central table tracking visibility of all shareable content
 
 ## Important Notes
 

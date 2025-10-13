@@ -1,6 +1,7 @@
 import React from 'react'
 import { Calendar, Clock, CheckCircle, Star, FileText, Image, FileIcon, Sparkles } from 'lucide-react'
 import PrismCard from '@/components/PrismCard'
+import { useRouter } from 'next/navigation'
 
 interface ContentOwner {
   id: string
@@ -33,8 +34,18 @@ const DiscoverContentCard: React.FC<DiscoverContentCardProps> = ({
   engagement,
   createdAt
 }) => {
+  const router = useRouter()
+
   if (!content) {
     return null
+  }
+
+  const handleCardClick = () => {
+    // Only PROJECT type is navigable for now
+    if (contentType === 'PROJECT' && content.id) {
+      router.push(`/projects/${content.id}`)
+    }
+    // Future: Add navigation for other content types (TASK, NOTE, EVENT, etc.)
   }
 
   const formatDate = (dateString: string) => {
@@ -259,7 +270,10 @@ const DiscoverContentCard: React.FC<DiscoverContentCardProps> = ({
   }
 
   return (
-    <PrismCard className="hover:scale-[1.02] transition-transform duration-200">
+    <PrismCard
+      className={`hover:scale-[1.02] transition-transform duration-200 ${contentType === 'PROJECT' ? 'cursor-pointer' : ''}`}
+      onClick={handleCardClick}
+    >
       {/* Owner Header */}
       <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold">

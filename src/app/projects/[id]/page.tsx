@@ -10,11 +10,13 @@ import PhotoGallery from '@/components/media/PhotoGallery'
 import ScreenshotCapture from '@/components/media/ScreenshotCapture'
 import DocumentViewer from '@/components/media/DocumentViewer'
 import DateInput from '@/components/DateInput'
-import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText, Trash2, AlertTriangle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Copy, Check, Search, ChevronLeft, ChevronRight, Image as ImageIcon, Camera, FileText, Trash2, AlertTriangle, Edit } from 'lucide-react'
 import PriorityFilter, { PriorityLevel, SortOrder } from '@/components/PriorityFilter'
 import { apiClient, getApiUrl } from '@/lib/api-client'
 import { setupDevAuthTokens, checkAuthTokens } from '@/lib/dev-auth-helper'
 import { toast } from 'sonner'
+import VisibilitySelector, { VisibilityOption } from '@/components/VisibilitySelector'
+import VisibilityDropdown from '@/components/VisibilityDropdown'
 
 // Language options for code snippets
 const languageOptions = [
@@ -120,8 +122,15 @@ export default function ProjectDetailPage() {
   const [isUpdatingProjectPriority, setIsUpdatingProjectPriority] = useState(false)
   const priorityMenuRef = useRef<HTMLDivElement>(null)
 
+  // Edit project modal state
+  const [showEditProject, setShowEditProject] = useState(false)
+  const [editProjectName, setEditProjectName] = useState('')
+  const [editProjectDescription, setEditProjectDescription] = useState('')
+  const [editProjectVisibility, setEditProjectVisibility] = useState<VisibilityOption>('PRIVATE')
+
   // Local state for immediate priority update
   const [displayPriority, setDisplayPriority] = useState<string | null>(null)
+  const [displayVisibility, setDisplayVisibility] = useState<VisibilityOption | null>(null)
 
   const { data: project, error: projectError } = useSWR(
     projectId ? `/api/projects/${projectId}` : null,
@@ -250,6 +259,35 @@ export default function ProjectDetailPage() {
     } finally {
       setIsDeleting(false)
       setShowDeleteDialog(false)
+    }
+  }
+
+  const openEditProject = () => {
+    setEditProjectName(project?.name || '')
+    setEditProjectDescription(project?.description || '')
+    setEditProjectVisibility(project?.visibility || 'PRIVATE')
+    setShowEditProject(true)
+  }
+
+  const handleUpdateProject = async () => {
+    if (!editProjectName.trim()) {
+      toast.error('Project name is required')
+      return
+    }
+
+    try {
+      await apiClient.put(`/projects/${projectId}`, {
+        name: editProjectName,
+        description: editProjectDescription,
+        visibility: editProjectVisibility
+      })
+
+      toast.success('Project updated successfully')
+      setShowEditProject(false)
+      mutate(`/api/projects/${projectId}`)
+    } catch (error) {
+      console.error('Error updating project:', error)
+      toast.error('Failed to update project')
     }
   }
 
@@ -588,6 +626,25 @@ export default function ProjectDetailPage() {
     }
   }
 
+  const handleProjectVisibilityChange = async (newVisibility: VisibilityOption) => {
+    const oldVisibility = displayVisibility || project?.visibility || 'PRIVATE'
+
+    // Immediately update the UI (optimistic update)
+    setDisplayVisibility(newVisibility)
+
+    try {
+      await apiClient.put(`/projects/${projectId}`, { visibility: newVisibility })
+      toast.success(`Project visibility updated to ${newVisibility.toLowerCase()}`)
+      // Refresh project data in background
+      mutate(`/api/projects/${projectId}`)
+    } catch (error) {
+      console.error('Error updating project visibility:', error)
+      toast.error('Failed to update project visibility')
+      // Rollback on error
+      setDisplayVisibility(oldVisibility)
+    }
+  }
+
   const getPriorityColor = (priority: string) => {
     switch(priority) {
       case 'HIGH': return 'text-red-400'
@@ -679,14 +736,32 @@ export default function ProjectDetailPage() {
               {project.description && (
                 <p className="text-gray-400 mt-2">{project.description}</p>
               )}
+              {/* Visibility Dropdown */}
+              <div className="mt-3">
+                <VisibilityDropdown
+                  value={displayVisibility || project?.visibility || 'PRIVATE'}
+                  onChange={handleProjectVisibilityChange}
+                  size="sm"
+                  showLabel={true}
+                />
+              </div>
             </div>
-            <button
-              onClick={() => setShowDeleteDialog(true)}
-              className="ml-4 p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors duration-200"
-              title="Delete Project"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={openEditProject}
+                className="p-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                title="Edit Project"
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowDeleteDialog(true)}
+                className="p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors duration-200"
+                title="Delete Project"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1425,6 +1500,57 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </PrismCard>
+
+      {/* Edit Project Modal */}
+      {showEditProject && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <PrismCard className="w-full max-w-md">
+            <h3 className="text-2xl font-bold text-white mb-6">Edit Project</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Project Name</label>
+                <input
+                  type="text"
+                  value={editProjectName}
+                  onChange={(e) => setEditProjectName(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g., Work Tasks"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Description (Optional)</label>
+                <textarea
+                  value={editProjectDescription}
+                  onChange={(e) => setEditProjectDescription(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 h-24 resize-none"
+                  placeholder="Brief description of the project"
+                />
+              </div>
+              <div>
+                <VisibilitySelector
+                  value={editProjectVisibility}
+                  onChange={setEditProjectVisibility}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleUpdateProject}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => setShowEditProject(false)}
+                  className="flex-1 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </PrismCard>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (

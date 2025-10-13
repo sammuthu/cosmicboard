@@ -187,6 +187,7 @@ This document outlines a phased approach to implementing 23 key features for Cos
   - Define roles (Owner, Editor, Viewer, Commenter)
   - Implement granular permissions system
   - Add team/group management
+  - **Create groups feature** - Allow users to create and manage contact groups for easier sharing
   - Create organization workspace structure
   - *Rationale: Required for enterprise adoption, security compliance*
 

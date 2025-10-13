@@ -15,6 +15,7 @@ import NetworkSidebar from '@/components/NetworkSidebar'
 import { setActiveTheme, getThemeTemplates } from '@/lib/api/themes'
 import { useDiscoverFeed } from '@/hooks/useDiscoverFeed'
 import DiscoverContentCard from '@/components/discover/DiscoverContentCard'
+import VisibilitySelector, { VisibilityOption } from '@/components/VisibilitySelector'
 
 type HomeTab = 'discover' | 'myspace'
 
@@ -27,6 +28,7 @@ export default function Home() {
   const [showNewProject, setShowNewProject] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
+  const [newProjectVisibility, setNewProjectVisibility] = useState<VisibilityOption>('PRIVATE')
   const [showSearch, setShowSearch] = useState(false)
   const [showNetworkSidebar, setShowNetworkSidebar] = useState(false)
   const [applyingTheme, setApplyingTheme] = useState(false)
@@ -397,12 +399,14 @@ export default function Home() {
       const { apiClient } = await import('@/lib/api-client')
       const result = await apiClient.post('/projects', {
         name: newProjectName,
-        description: newProjectDescription
+        description: newProjectDescription,
+        visibility: newProjectVisibility
       })
 
       toast.success('Project created successfully!')
       setNewProjectName('')
       setNewProjectDescription('')
+      setNewProjectVisibility('PRIVATE')
       setShowNewProject(false)
       fetchProjects()
     } catch (error: any) {
@@ -820,13 +824,19 @@ export default function Home() {
                   required
                 />
               </div>
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-gray-400 text-sm mb-2">Description (Optional)</label>
                 <textarea
                   value={newProjectDescription}
                   onChange={(e) => setNewProjectDescription(e.target.value)}
                   className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 h-24 resize-none"
                   placeholder="Brief description of the project"
+                />
+              </div>
+              <div className="mb-6">
+                <VisibilitySelector
+                  value={newProjectVisibility}
+                  onChange={setNewProjectVisibility}
                 />
               </div>
               <div className="flex gap-3">

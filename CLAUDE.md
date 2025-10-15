@@ -265,6 +265,200 @@ Projects support three visibility levels controlled via the VisibilityDropdown c
 - **Theme**: id, userId, themeId, isGlobal, deviceType, customizations, timestamps
 - **ContentVisibility**: id, contentType, contentId, visibility, ownerId, timestamps - Central table tracking visibility of all shareable content
 
+## Security Guidelines
+
+**CRITICAL**: Security is paramount. Every feature must be built with security-first approach to protect our users.
+
+### Authentication & Authorization
+
+1. **Magic Link Authentication**:
+   - ✅ Passwordless authentication reduces credential theft risk
+   - ✅ Magic link tokens expire after use or timeout
+   - ✅ Tokens are cryptographically secure (generated via `crypto.randomBytes`)
+   - ⚠️ **NEVER** log authentication tokens in production
+   - ⚠️ **NEVER** include tokens in error messages or client-side JavaScript
+
+2. **Session Management**:
+   - ✅ Use secure, httpOnly cookies for session tokens
+   - ✅ Implement session expiration (90-day default for dev tokens)
+   - ✅ Rotate tokens on privilege escalation
+   - ✅ Implement logout functionality that invalidates all tokens
+   - ⚠️ **NEVER** store sensitive tokens in localStorage or sessionStorage
+
+3. **Multi-Factor Authentication (2FA)**:
+   - 🔜 **TO IMPLEMENT**: Add 2FA support for user accounts
+   - 🔜 Time-based OTP (TOTP) or SMS-based verification
+   - 🔜 Recovery codes for account access if 2FA device is lost
+   - 🔜 Force 2FA for accounts with elevated privileges
+
+### API Security
+
+1. **Input Validation**:
+   - ✅ Validate ALL user inputs on both client and server
+   - ✅ Use TypeScript types and Zod schemas for validation
+   - ⚠️ **NEVER** trust client-side validation alone
+   - ⚠️ Sanitize inputs before database operations
+   - ⚠️ Validate file uploads (type, size, content)
+
+2. **Authorization Checks**:
+   - ✅ Verify user ownership before CRUD operations
+   - ✅ Check project visibility before allowing access
+   - ✅ Implement role-based access control (RBAC)
+   - ⚠️ **NEVER** rely on client-side permission checks only
+   - ⚠️ **ALWAYS** verify permissions on the backend
+
+3. **Rate Limiting**:
+   - 🔜 **TO IMPLEMENT**: Add rate limiting to API endpoints
+   - 🔜 Prevent brute force attacks on authentication
+   - 🔜 Protect against DoS attacks
+   - 🔜 Implement per-IP and per-user rate limits
+
+4. **CORS Configuration**:
+   - ✅ Restrict CORS to known domains only
+   - ⚠️ **NEVER** use `Access-Control-Allow-Origin: *` in production
+   - ✅ Validate Origin header on sensitive operations
+   - Current allowed origins: localhost:7777, cosmic.board, cosmicspace.app
+
+### Data Protection
+
+1. **Sensitive Data Handling**:
+   - ⚠️ **NEVER** log sensitive user data (emails, tokens, passwords)
+   - ⚠️ **NEVER** expose user emails in public APIs
+   - ✅ Use environment variables for secrets (API keys, database credentials)
+   - ✅ Implement proper `.gitignore` to exclude `.env` files
+   - ✅ Redact sensitive data in error messages
+
+2. **Database Security**:
+   - ✅ Use parameterized queries (Prisma ORM prevents SQL injection)
+   - ✅ Implement soft deletes for data recovery
+   - ✅ Encrypt sensitive fields at rest
+   - 🔜 **TO IMPLEMENT**: Regular automated backups
+   - 🔜 **TO IMPLEMENT**: Audit logs for sensitive operations
+
+3. **File Upload Security**:
+   - ✅ Validate file types (allow photos, PDFs only)
+   - ✅ Limit file sizes (prevent storage exhaustion)
+   - ✅ Store files outside web root when possible
+   - 🔜 **TO IMPLEMENT**: Virus scanning for uploaded files
+   - ⚠️ **NEVER** execute uploaded files
+   - ⚠️ **NEVER** trust file extensions alone (check MIME types)
+
+### Frontend Security
+
+1. **XSS Prevention**:
+   - ✅ React escapes output by default
+   - ⚠️ **NEVER** use `dangerouslySetInnerHTML` without sanitization
+   - ✅ Use DOMPurify for sanitizing HTML if needed
+   - ✅ Validate and sanitize markdown content
+   - ⚠️ Be cautious with `eval()`, `Function()`, `innerHTML`
+
+2. **CSRF Protection**:
+   - 🔜 **TO IMPLEMENT**: CSRF tokens for state-changing operations
+   - ✅ Use SameSite cookies
+   - ✅ Verify Origin/Referer headers
+
+3. **Client-Side Storage**:
+   - ⚠️ **NEVER** store authentication tokens in localStorage
+   - ⚠️ **NEVER** store sensitive user data client-side
+   - ✅ Use httpOnly cookies for authentication
+   - ✅ Clear sensitive data on logout
+
+### Infrastructure Security
+
+1. **HTTPS/TLS**:
+   - ✅ Use HTTPS in production (cosmic.board, cosmicspace.app)
+   - ✅ Enforce TLS 1.2+ minimum
+   - ⚠️ **NEVER** send credentials over HTTP
+   - ✅ Use HSTS headers in production
+
+2. **Environment Separation**:
+   - ✅ Separate development, staging, and production environments
+   - ✅ Use different credentials for each environment
+   - ✅ Never use production credentials in development
+   - ✅ LocalStack for AWS services in development
+
+3. **Dependency Security**:
+   - 🔜 **TO IMPLEMENT**: Regular `npm audit` and dependency updates
+   - 🔜 Use Dependabot for automated security updates
+   - ⚠️ Review dependencies before adding them
+   - ⚠️ Avoid unmaintained packages
+
+### Incident Response
+
+1. **Security Monitoring**:
+   - 🔜 **TO IMPLEMENT**: Log all authentication attempts
+   - 🔜 Monitor for suspicious activity patterns
+   - 🔜 Alert on multiple failed login attempts
+   - 🔜 Track API abuse and anomalies
+
+2. **Breach Response Plan**:
+   - 📋 **DOCUMENTED**: Immediately rotate all credentials
+   - 📋 Disconnect compromised systems from network
+   - 📋 Perform comprehensive security analysis
+   - 📋 Create full backups before remediation
+   - 📋 Notify affected users if data breach occurs
+   - 📋 Document incident timeline and lessons learned
+
+3. **Account Recovery**:
+   - 🔜 **TO IMPLEMENT**: Secure account recovery flow
+   - 🔜 Email verification for password resets
+   - 🔜 Security questions or backup codes
+   - 🔜 Account lockout after multiple failed attempts
+
+### User Education
+
+1. **Security Features to Implement**:
+   - 🔜 2FA enrollment prompts for all users
+   - 🔜 Password strength indicators (when implemented)
+   - 🔜 Security dashboard showing active sessions
+   - 🔜 Email notifications for security events (new login, password change)
+   - 🔜 Option to review and revoke active sessions
+
+2. **Best Practices**:
+   - Encourage users to enable 2FA
+   - Provide security tips in onboarding
+   - Warn users about phishing attempts
+   - Regular security reminders in app
+
+### Code Review Checklist
+
+Before merging any code, verify:
+- [ ] No hardcoded secrets or credentials
+- [ ] Input validation on all user inputs
+- [ ] Authorization checks on protected operations
+- [ ] Sensitive data not logged or exposed
+- [ ] Dependencies are up-to-date and secure
+- [ ] CORS properly configured
+- [ ] Error messages don't leak sensitive info
+- [ ] File uploads properly validated
+- [ ] SQL injection prevention (use Prisma ORM)
+- [ ] XSS prevention (avoid dangerouslySetInnerHTML)
+
+### Security Lessons Learned
+
+**GitHub Account Compromise (October 12, 2025)**:
+- ✅ Importance of 2FA for all accounts
+- ✅ Regular security audits and monitoring
+- ✅ Immediate response plan (disconnect, backup, analyze)
+- ✅ Multiple backup strategies (local + cloud)
+- ✅ Documentation of security incidents
+- ✅ Apply same security standards to user accounts
+
+**Action Items from Incident**:
+1. ✅ Enable 2FA on all development accounts
+2. 🔜 Implement 2FA for CosmicBoard users
+3. 🔜 Add session management and active device tracking
+4. 🔜 Implement security audit logs
+5. 🔜 Add email notifications for security events
+6. 🔜 Create user security dashboard
+
+### Security Resources
+
+- **OWASP Top 10**: https://owasp.org/www-project-top-ten/
+- **Node.js Security Best Practices**: https://nodejs.org/en/docs/guides/security/
+- **Next.js Security Headers**: https://nextjs.org/docs/advanced-features/security-headers
+- **GitHub Security**: https://docs.github.com/en/code-security
+
 ## Important Notes
 
 - **SWR caching** for API responses with automatic revalidation

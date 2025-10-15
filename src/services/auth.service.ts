@@ -237,8 +237,53 @@ class AuthService {
     return stored ? JSON.parse(stored) : null;
   }
 
-  // REMOVED: setupDevelopmentAuth() - replaced with proper magic link flow
-  // For development testing: use magic link from backend console logs or manual localStorage setup
+  // Development mode: quick login without magic link
+  async devLogin(email: string): Promise<{ success: boolean; user?: User; message?: string }> {
+    // Only available in development
+    if (process.env.NODE_ENV !== 'development') {
+      return {
+        success: false,
+        message: 'Dev login only available in development mode'
+      };
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/dev-login`, { email });
+
+      if (response.data.tokens) {
+        this.saveTokens(response.data.tokens);
+      }
+
+      if (response.data.user && typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
+      return {
+        success: true,
+        user: response.data.user
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.error || 'Dev login failed'
+      };
+    }
+  }
+
+  // Get list of available dev accounts
+  async getDevAccounts(): Promise<Array<{ email: string; name: string; username?: string }>> {
+    if (process.env.NODE_ENV !== 'development') {
+      return [];
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/dev-accounts`);
+      return response.data.accounts || [];
+    } catch (error) {
+      console.error('Failed to get dev accounts:', error);
+      return [];
+    }
+  }
 }
 
 export default new AuthService();

@@ -47,6 +47,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     setLoading(true);
     try {
+      // In development mode, auto-login with default account if not authenticated
+      if (process.env.NODE_ENV === 'development' && !authService.isAuthenticated()) {
+        console.log('🔧 Dev mode: Auto-logging in with nmuthu@gmail.com');
+        const result = await authService.devLogin('nmuthu@gmail.com');
+        if (result.success && result.user) {
+          setUser(result.user);
+          setIsAuthenticated(true);
+          setLoading(false);
+          return;
+        }
+      }
+
       // Check normal authentication (works for both dev and production)
       if (authService.isAuthenticated()) {
         const currentUser = await authService.getCurrentUser();

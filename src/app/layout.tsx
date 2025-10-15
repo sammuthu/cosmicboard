@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "./providers";
 import DevAuthLoader from "@/components/DevAuthLoader";
+import { DevAccountSwitcher } from "@/components/DevAccountSwitcher";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +36,7 @@ export default function RootLayout({
         <DevAuthLoader />
         <Providers>
           {children}
+          <DevAccountSwitcher />
         </Providers>
         <Analytics />
       </body>
